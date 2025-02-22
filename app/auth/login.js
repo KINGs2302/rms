@@ -45,6 +45,7 @@ export default function Login() {
               <div>
                 <Label htmlFor="email">Email</Label>
                 <Input
+                className="border border-gray-400"
                   id="email"
                   type="email"
                   value={email}
@@ -55,6 +56,7 @@ export default function Login() {
               <div>
                 <Label htmlFor="password">Password</Label>
                 <Input
+                className="border border-gray-400"
                   id="password"
                   type="password"
                   value={password}
