@@ -29,7 +29,7 @@ export default function Login() {
       const { data } = await axios.post("https://restro-backend-0ozo.onrender.com/api/auth/local", { email, password });
       alert("Login successful: " + data.token);
       router.push("/dashboard");
-    } catch (error) {
+    } catch (err) {
       setError(err.response?.data?.message || "Login failed");
     }
     
