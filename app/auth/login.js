@@ -18,10 +18,21 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const router = useRouter();
 
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Implement authentication logic here
-    router.push("/dashboard");
+
+    try {
+      const { data } = await axios.post("https://restro-backend-0ozo.onrender.com/api/auth/local", { email, password });
+      alert("Login successful: " + data.token);
+      router.push("/dashboard");
+    } catch (err) {
+      setError(err.response?.data?.message || "Login failed");
+    }
+    
+   
   };
 
   return (
