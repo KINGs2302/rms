@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
   const router = useRouter();
 
 
@@ -28,7 +29,7 @@ export default function Login() {
       const { data } = await axios.post("https://restro-backend-0ozo.onrender.com/api/auth/local", { email, password });
       alert("Login successful: " + data.token);
       router.push("/dashboard");
-    } catch (err) {
+    } catch (error) {
       setError(err.response?.data?.message || "Login failed");
     }
     
