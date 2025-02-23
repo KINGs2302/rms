@@ -10,14 +10,31 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {  // Ensure it runs on the client
-      const user = localStorage.getItem("loginuser");
-      if (!user) {
-        router.push("/"); // Redirect to login page if not logged in
-      } else {
-        setLoginuser(user);
+    const token = localStorage.getItem("token");
+
+    // Verify token by calling the backend
+    const verifyToken = async () => {
+      try {
+        const response = await axios.get("https://restro-backend-0ozo.onrender.com/api/auth/validate", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+  
+        if (!response.data.valid) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("loginuser");
+          router.push("/"); // Redirect to login if token is invalid
+        }
+      } catch (error) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("loginuser");
+        router.push("/"); // Redirect to login on error
       }
-      setLoading(false);
+    };
+  
+    if (!token) {
+      router.push("/"); // Redirect if no token exists
+    } else {
+      verifyToken(); // Validate token
     }
   }, [router]);
 

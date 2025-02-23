@@ -2,6 +2,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import {
   Card,
   CardHeader,
@@ -17,13 +20,11 @@ import { Button } from "@/components/ui/button";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
   const router = useRouter();
-  const [message, setMessage] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const user = localStorage.getItem("loginuser");
+      const user = localStorage.getItem("token");
       if (user) {
         router.push("/dashboard"); // Redirect if already logged in
       }
@@ -33,25 +34,46 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await axios.post("https://restro-backend-0ozo.onrender.com/api/auth/local", { 
-        identifier: email, 
-        password: password 
-      });
-      
-      localStorage.setItem("token", data.jwt);
-      localStorage.setItem("loginuser", data.user.username);
-      setMessage(`Welcome, ${data.user.username}! Redirecting...`);
-  
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 1500); // Redirect after 1.5 seconds
+      const { data } = await axios.post(
+        "https://restro-backend-0ozo.onrender.com/api/auth/local",
+        {
+          identifier: email,
+          password: password,
+        }
+      );
+
+      if (data.jwt) {
+        localStorage.setItem("token", data.jwt);
+        localStorage.setItem("loginuser", data.user.username);
+        
+        toast.success(`Welcome, ${data.user.username}!`, {
+          position: "top-right",
+          autoClose: 3000,
+        });
+
+        setTimeout(() => {
+          router.push("/dashboard"); // Redirect only if valid login
+        }, 1500);
+      } else {
+        toast.error("Invalid login credentials", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      }
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      toast.error(
+        err.response?.data?.message || "Invalid credentials",
+        {
+          position: "top-right",
+          autoClose: 3000,
+        }
+      );
     }
   };
 
   return (
     <div className="flex h-screen bg-gray-100">
+      <ToastContainer />
       <aside className="w-64 bg-gray-900 text-white flex items-center justify-center">
         <h2 className="text-xl font-semibold">Welcome</h2>
       </aside>
@@ -93,7 +115,6 @@ export default function Login() {
               >
                 Sign In
               </Button>
-              {message && <p className="text-green-600 text-center">{message}</p>}
             </CardFooter>
           </form>
         </Card>
