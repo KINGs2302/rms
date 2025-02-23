@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 import {
   Card,
   CardHeader,
@@ -16,22 +17,44 @@ import { Button } from "@/components/ui/button";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
   const router = useRouter();
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const user = localStorage.getItem("loginuser");
+      if (user) {
+        router.push("/dashboard"); // Redirect if already logged in
+      }
+    }
+  }, [router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Implement authentication logic here
-    router.push("/dashboard");
+    try {
+      const { data } = await axios.post("https://restro-backend-0ozo.onrender.com/api/auth/local", { 
+        identifier: email, 
+        password: password 
+      });
+      
+      localStorage.setItem("token", data.jwt);
+      localStorage.setItem("loginuser", data.user.username);
+      setMessage(`Welcome, ${data.user.username}! Redirecting...`);
+  
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 1500); // Redirect after 1.5 seconds
+    } catch (err) {
+      setError(err.response?.data?.message || "Login failed");
+    }
   };
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar (Empty for Login Page) */}
       <aside className="w-64 bg-gray-900 text-white flex items-center justify-center">
         <h2 className="text-xl font-semibold">Welcome</h2>
       </aside>
-
-      {/* Main Content */}
       <main className="flex-1 flex items-center justify-center">
         <Card className="w-full max-w-md bg-gray-200 shadow-lg">
           <CardHeader className="text-center">
@@ -45,7 +68,6 @@ export default function Login() {
               <div>
                 <Label htmlFor="email">Email</Label>
                 <Input
-                className="border border-gray-400"
                   id="email"
                   type="email"
                   value={email}
@@ -56,7 +78,6 @@ export default function Login() {
               <div>
                 <Label htmlFor="password">Password</Label>
                 <Input
-                className="border border-gray-400"
                   id="password"
                   type="password"
                   value={password}
@@ -65,10 +86,14 @@ export default function Login() {
                 />
               </div>
             </CardContent>
-            <CardFooter className="flex justify-center">
-              <Button type="submit" className="w-full bg-gray-900 hover:bg-gray-800">
+            <CardFooter className="flex justify-center flex-col">
+              <Button
+                type="submit"
+                className="w-full bg-gray-900 hover:bg-gray-800"
+              >
                 Sign In
               </Button>
+              {message && <p className="text-green-600 text-center">{message}</p>}
             </CardFooter>
           </form>
         </Card>

@@ -1,16 +1,37 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 export default function Dashboard() {
   const router = useRouter();
   const [active, setActive] = useState("Dashboard");
+  const [loginuser, setLoginuser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {  // Ensure it runs on the client
+      const user = localStorage.getItem("loginuser");
+      if (!user) {
+        router.push("/"); // Redirect to login page if not logged in
+      } else {
+        setLoginuser(user);
+      }
+      setLoading(false);
+    }
+  }, [router]);
 
   const handleLogout = () => {
-    // Perform logout logic (clear token, session, etc.)
-    router.push("/login"); // Redirect to login page
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("loginuser");
+      localStorage.removeItem("token"); // Clear auth token
+      router.push("/"); // Redirect to login page
+    }
   };
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
 
   return (
     <div className="flex h-screen bg-gray-100">
