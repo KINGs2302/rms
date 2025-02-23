@@ -20,54 +20,60 @@ import { Button } from "@/components/ui/button";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const user = localStorage.getItem("token");
-      if (user) {
-        router.push("/dashboard"); // Redirect if already logged in
+    const verifyToken = async () => {
+      const token = localStorage.getItem("token");
+  
+      if (!token) return; // No token, no validation needed
+  
+      try {
+        const response = await axios.get(
+          "https://restro-backend-0ozo.onrender.com/api/auth/validate",
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+  
+        if (response.data.valid) {
+          router.replace("/dashboard"); // Redirect only if token is valid
+        } else {
+          localStorage.removeItem("token");
+        }
+      } catch (error) {
+        localStorage.removeItem("token");
       }
-    }
-  }, [router]);
+    };
+  
+    verifyToken();
+  }, [router]); 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+
     try {
       const { data } = await axios.post(
         "https://restro-backend-0ozo.onrender.com/api/auth/local",
-        {
-          identifier: email,
-          password: password,
-        }
+        { identifier: email, password: password }
       );
 
       if (data.jwt) {
         localStorage.setItem("token", data.jwt);
         localStorage.setItem("loginuser", data.user.username);
-        
-        toast.success(`Welcome, ${data.user.username}!`, {
-          position: "top-right",
-          autoClose: 3000,
-        });
-
+      
+        toast.success(`Welcome, ${data.user.username}!`);
         setTimeout(() => {
-          router.push("/dashboard"); // Redirect only if valid login
+          setLoading(false); // Stop loading before redirection
+          router.replace("/dashboard");
         }, 1500);
       } else {
-        toast.error("Invalid login credentials", {
-          position: "top-right",
-          autoClose: 3000,
-        });
+        toast.error("Invalid login credentials");
       }
     } catch (err) {
-      toast.error(
-        err.response?.data?.message || "Invalid credentials",
-        {
-          position: "top-right",
-          autoClose: 3000,
-        }
-      );
+      toast.error("Invalid credentials. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -112,8 +118,9 @@ export default function Login() {
               <Button
                 type="submit"
                 className="w-full bg-gray-900 hover:bg-gray-800"
+                disabled={loading}
               >
-                Sign In
+                {loading ? "Signing In..." : "Sign In"}
               </Button>
             </CardFooter>
           </form>
