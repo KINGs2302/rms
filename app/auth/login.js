@@ -23,13 +23,17 @@ export default function Login() {
 
 
   const handleSubmit = async (e) => {
-    console.log("hiii");
+    
     e.preventDefault();
     // Implement authentication logic here
     
     try {
-      const { data } = await axios.post("https://restro-backend-0ozo.onrender.com/api/auth/local", { email, password });
-      alert("Login successful: " + data.token);
+      const { data } = await axios.post("https://restro-backend-0ozo.onrender.com/api/auth/local", { identifier:email,password:password ,
+      
+      });
+      localStorage.setItem("token", data.jwt);
+      localStorage.setItem("loginuser", data.user.username);
+      alert("Login successful: " + data.user.username);
       router.push("/dashboard");
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
@@ -81,7 +85,7 @@ export default function Login() {
             </CardContent>
             <CardFooter className="flex justify-center">
               <Button type="submit" className="w-full bg-gray-900 hover:bg-gray-800">
-                Sign Innnnnnnnnn
+                Sign In
               </Button>
             </CardFooter>
           </form>

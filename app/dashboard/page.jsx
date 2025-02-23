@@ -6,10 +6,14 @@ import Link from "next/link";
 export default function Dashboard() {
   const router = useRouter();
   const [active, setActive] = useState("Dashboard");
-
+  const loginuser = localStorage.getItem("loginuser");
+        if (!loginuser) {
+          router.push("/");
+        }
   const handleLogout = () => {
     // Perform logout logic (clear token, session, etc.)
-    router.push("/login"); // Redirect to login page
+    
+    router.push("/"); // Redirect to login page
   };
 
   return (
