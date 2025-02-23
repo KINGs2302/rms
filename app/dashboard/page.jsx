@@ -7,20 +7,29 @@ export default function Dashboard() {
   const router = useRouter();
   const [active, setActive] = useState("Dashboard");
   const [loginuser, setLoginuser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const user = localStorage.getItem("loginuser");
-    if (!user) {
-      router.push("/");
-    } else {
-      setLoginuser(user);
+    if (typeof window !== "undefined") {
+      const user = localStorage.getItem("loginuser");
+      if (!user) {
+        router.push("/"); // Redirect to login page if not logged in
+      } else {
+        setLoginuser(user);
+      }
+      setLoading(false);
     }
-  }, []);
+  }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem("loginuser"); // Clear stored user data
+    localStorage.removeItem("loginuser");
+    localStorage.removeItem("token"); // Clear auth token
     router.push("/"); // Redirect to login page
   };
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
 
   return (
     <div className="flex h-screen bg-gray-100">
