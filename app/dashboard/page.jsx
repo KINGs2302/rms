@@ -10,7 +10,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined") {  // Ensure it runs on the client
       const user = localStorage.getItem("loginuser");
       if (!user) {
         router.push("/"); // Redirect to login page if not logged in
@@ -22,9 +22,11 @@ export default function Dashboard() {
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem("loginuser");
-    localStorage.removeItem("token"); // Clear auth token
-    router.push("/"); // Redirect to login page
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("loginuser");
+      localStorage.removeItem("token"); // Clear auth token
+      router.push("/"); // Redirect to login page
+    }
   };
 
   if (loading) {
