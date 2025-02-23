@@ -2,57 +2,48 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import axios from "axios";
 
 export default function Dashboard() {
   const router = useRouter();
   const [active, setActive] = useState("Dashboard");
-  const [loginuser, setLoginuser] = useState(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    // Verify token by calling the backend
     const verifyToken = async () => {
-      try {
-        const response = await axios.get("https://restro-backend-0ozo.onrender.com/api/auth/validate", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+      const token = localStorage.getItem("token");
   
-        if (!response.data.valid) {
+      if (!token) {
+        router.replace("/");
+        return;
+      }
+  
+      try {
+        const response = await axios.get(
+          "https://restro-backend-0ozo.onrender.com/api/users/me",
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+  
+        if (response.data.valid) {
           localStorage.removeItem("token");
-          localStorage.removeItem("loginuser");
-          router.push("/"); // Redirect to login if token is invalid
+          router.replace("/");
         }
       } catch (error) {
         localStorage.removeItem("token");
-        localStorage.removeItem("loginuser");
-        router.push("/"); // Redirect to login on error
+        router.replace("/");
       }
     };
   
-    if (!token) {
-      router.push("/"); // Redirect if no token exists
-    } else {
-      verifyToken(); // Validate token
-    }
+    verifyToken();
   }, [router]);
 
   const handleLogout = () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("loginuser");
-      localStorage.removeItem("token"); // Clear auth token
-      router.push("/"); // Redirect to login page
-    }
+    localStorage.removeItem("loginuser");
+    localStorage.removeItem("token");
+    router.replace("/"); // Redirect to login page
   };
-
-  if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
-  }
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
       <aside className="w-64 bg-gray-900 text-white p-5">
         <h2 className="text-2xl font-semibold mb-5">Dashboard</h2>
         <ul className="space-y-3">
@@ -89,7 +80,6 @@ export default function Dashboard() {
         </button>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 p-5">
         <h1 className="text-3xl font-semibold">{active}</h1>
         <p>Welcome to the {active} page!</p>
