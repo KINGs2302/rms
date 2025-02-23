@@ -19,11 +19,11 @@ export default function Dashboard() {
   
       try {
         const response = await axios.get(
-          "https://restro-backend-0ozo.onrender.com/api/auth/local",
+          "https://restro-backend-0ozo.onrender.com/api/users/me",
           { headers: { Authorization: `Bearer ${token}` } }
         );
   
-        if (!response.data.valid) {
+        if (response.data.valid) {
           localStorage.removeItem("token");
           router.replace("/");
         }

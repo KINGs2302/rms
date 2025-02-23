@@ -27,11 +27,11 @@ export default function Login() {
     const verifyToken = async () => {
       const token = localStorage.getItem("token");
   
-      if (!token) return; // No token, no validation needed
+      if (token) return; // No token, no validation needed
   
       try {
         const response = await axios.get(
-          "https://restro-backend-0ozo.onrender.com/api/auth/validate",
+          "https://restro-backend-0ozo.onrender.com/api/users/me",
           { headers: { Authorization: `Bearer ${token}` } }
         );
   
