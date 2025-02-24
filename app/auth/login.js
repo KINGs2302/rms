@@ -26,17 +26,16 @@ export default function Login() {
   useEffect(() => {
     const verifyToken = async () => {
       const token = localStorage.getItem("token");
-  
-      if (token) return; // No token, no validation needed
-  
+      if (!token) return;
+
       try {
         const response = await axios.get(
           "https://restro-backend-0ozo.onrender.com/api/users/me",
           { headers: { Authorization: `Bearer ${token}` } }
         );
-  
+
         if (response.data.valid) {
-          router.replace("/dashboard"); // Redirect only if token is valid
+          router.replace("/dashboard");
         } else {
           localStorage.removeItem("token");
         }
@@ -44,9 +43,8 @@ export default function Login() {
         localStorage.removeItem("token");
       }
     };
-  
     verifyToken();
-  }, [router]); 
+  }, [router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -61,10 +59,11 @@ export default function Login() {
       if (data.jwt) {
         localStorage.setItem("token", data.jwt);
         localStorage.setItem("loginuser", data.user.username);
-      
+        localStorage.setItem("restroname", data.user.restro_name);
         toast.success(`Welcome, ${data.user.username}!`);
+        
         setTimeout(() => {
-          setLoading(false); // Stop loading before redirection
+          setLoading(false);
           router.replace("/dashboard");
         }, 1500);
       } else {
@@ -78,13 +77,13 @@ export default function Login() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex flex-col md:flex-row h-screen bg-gray-100">
       <ToastContainer />
-      <aside className="w-64 bg-gray-900 text-white flex items-center justify-center">
+      <aside className="w-full md:w-1/3 lg:w-1/4 bg-gray-900 text-white flex items-center justify-center p-5 md:p-10">
         <h2 className="text-xl font-semibold">Welcome</h2>
       </aside>
-      <main className="flex-1 flex items-center justify-center">
-        <Card className="w-full max-w-md bg-gray-200 shadow-lg">
+      <main className="flex-1 flex items-center justify-center p-5">
+        <Card className="w-full max-w-md bg-gray-200 shadow-lg p-5 md:p-8">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-semibold">Sign In</CardTitle>
             <CardDescription>
@@ -114,7 +113,7 @@ export default function Login() {
                 />
               </div>
             </CardContent>
-            <CardFooter className="flex justify-center flex-col">
+            <CardFooter className="flex flex-col space-y-2">
               <Button
                 type="submit"
                 className="w-full bg-gray-900 hover:bg-gray-800"
