@@ -22,20 +22,20 @@ export default function EmployeeRegister() {
     try {
       const token = localStorage.getItem("token");
       const restro_name = localStorage.getItem("restroname");
-  
+
       const response = await axios.get(
         `https://restro-backend-0ozo.onrender.com/api/users?filters[restro_name][$eq]=${restro_name}&populate[role][fields]=name`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-  
+
       setEmployees(response.data);
     } catch (error) {
       console.error("Error fetching employees:", error);
     }
   };
-  
+
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -109,7 +109,7 @@ export default function EmployeeRegister() {
                     <th className="border p-2">Username</th>
                     <th className="border p-2">Email</th>
                     <th className="border p-2">Status</th>
-                    <th className="border p-2">Actions</th>
+                    {role !== "Admin" && <th className="border p-2">Actions</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -119,19 +119,24 @@ export default function EmployeeRegister() {
                         <td className="border p-2">{emp.username}</td>
                         <td className="border p-2">{emp.email}</td>
                         <td className="border p-2">{emp.blocked ? "Blocked" : "Active"}</td>
-                        <td className="border p-2 flex justify-center gap-3">
-                          <PencilIcon className="w-5 h-5 text-blue-500 cursor-pointer" />
-                          <TrashIcon className="w-5 h-5 text-red-500 cursor-pointer" />
-                        </td>
+                        {role !== "Admin" && (
+                          <td className="border p-2 flex justify-center gap-3">
+                            <PencilIcon className="w-5 h-5 text-blue-500 cursor-pointer" />
+                            <TrashIcon className="w-5 h-5 text-red-500 cursor-pointer" />
+                          </td>
+                        )}
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="4" className="border p-2 text-gray-600">No employees in this role.</td>
+                      <td colSpan={role !== "Admin" ? "4" : "3"} className="border p-2 text-gray-600">
+                        No employees in this role.
+                      </td>
                     </tr>
                   )}
                 </tbody>
               </table>
+
             </div>
           ))}
         </div>
