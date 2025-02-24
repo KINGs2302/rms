@@ -19,7 +19,7 @@ export default function employeeregister() {
     username: "",
     email: "",
     password: "",
-    restro_name: restaurantName,
+    restro_name: localStorage.getItem("restroname"),
     role: 2, // Default: Public Customer
   });
 
@@ -38,6 +38,7 @@ export default function employeeregister() {
           },
         }
       );
+      // console.log(response);
       setEmployees(response.data);
     } catch (error) {
       console.error("Error fetching employees:", error.response?.data || error);
@@ -49,21 +50,30 @@ export default function employeeregister() {
   };
 
   const handleSubmit = async (e) => {
+   
+    // console.log(formData);
     e.preventDefault();
     try {
-      await axios.post(
+      const token = localStorage.getItem("token");
+      const data=await axios.post(
         "https://restro-backend-0ozo.onrender.com/api/users",
-        formData
+        formData, 
+        {headers: {
+          Authorization: `Bearer ${token}`, // Ensure token is correct
+        }
+      }
       );
+      // console.log(data);
       alert("Employee registered successfully!");
       fetchEmployees();
       setFormData({
         username: "",
         email: "",
         password: "",
-        restro_name: restaurantName,
+        restro_name: localStorage.getItem("restroname"),
         role: 2,
       });
+      
     } catch (error) {
       console.error("Error registering employee:", error);
       alert("Failed to register employee");
