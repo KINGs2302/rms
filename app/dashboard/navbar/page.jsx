@@ -51,7 +51,7 @@ export default function Navbar({ active, setActive }) {
             "Table",
             "Order POS",
             "Billing",
-            "employeeregister",
+            "Staff",
             "Profile",
             "Settings",
           ].map((item) => (
