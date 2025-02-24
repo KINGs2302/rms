@@ -118,7 +118,7 @@ export default function EmployeeRegister() {
                       <tr key={emp.email} className="text-center">
                         <td className="border p-2">{emp.username}</td>
                         <td className="border p-2">{emp.email}</td>
-                        <td className="border p-2">{emp.blocked ? "Blocked" : "Active"}</td>
+                        <td className="border p-2">{emp.blocked ? "Deactive" : "Active"}</td>
                         {role !== "Admin" && (
                           <td className="border p-2 flex justify-center gap-3">
                             <PencilIcon className="w-5 h-5 text-blue-500 cursor-pointer" />
