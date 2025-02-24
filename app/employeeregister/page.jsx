@@ -3,12 +3,17 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import Navbar from "../dashboard/navbar/page";
 
-export default function EmployeeRegister() {
+export default function employeeregister() {
   const [active, setActive] = useState("Employee Register");
   const [employees, setEmployees] = useState([]);
-  const [restaurantName, setRestaurantName] = useState(
-    localStorage.getItem("restroname") || "N/A"
-  );
+  const [restaurantName, setRestaurantName] = useState(""); // Default value
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedRestro = localStorage.getItem("restroname") || "N/A";
+      setRestaurantName(storedRestro);
+    }
+  }, []);
 
   const [formData, setFormData] = useState({
     username: "",
@@ -24,12 +29,18 @@ export default function EmployeeRegister() {
 
   const fetchEmployees = async () => {
     try {
+      const token = localStorage.getItem("token");
       const response = await axios.get(
-        "https://restro-backend-0ozo.onrender.com/api/users"
+        "https://restro-backend-0ozo.onrender.com/api/users",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       setEmployees(response.data);
     } catch (error) {
-      console.error("Error fetching employees:", error);
+      console.error("Error fetching employees:", error.response?.data || error);
     }
   };
 
@@ -39,14 +50,13 @@ export default function EmployeeRegister() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       await axios.post(
         "https://restro-backend-0ozo.onrender.com/api/users",
         formData
       );
       alert("Employee registered successfully!");
-      fetchEmployees(); // Refresh employee list
+      fetchEmployees();
       setFormData({
         username: "",
         email: "",
@@ -61,12 +71,17 @@ export default function EmployeeRegister() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-gray-100">
-      <Navbar active={active} setActive={setActive} />
-      <main className="flex flex-col p-5 items-center w-screen">
+    <div className="flex h-screen w-screen bg-gray-100 ">
+      {/* Fixed Sidebar */}
+      <div className="fixed top-0 left-0 h-full w-full md:w-64 bg-white shadow-md">
+        <Navbar active={active} setActive={setActive} />
+      </div>
+
+      {/* Scrollable Main Content */}
+      <main className=" w-full flex-1 overflow-y-auto p-5 ml-0 md:ml-64 justify-center items-center">
         <h1 className="text-3xl font-semibold mb-5">{active}</h1>
 
-        {/* Restaurant Name Section */}
+        {/* Restaurant Name */}
         <div className="bg-white p-4 rounded-md shadow-md mb-5 w-full max-w-md">
           <h2 className="text-lg font-semibold mb-2">Restaurant Name</h2>
           <p className="text-gray-700">{restaurantName}</p>
