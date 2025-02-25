@@ -3,6 +3,8 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import Navbar from "../dashboard/navbar/page";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Profile() {
   const router = useRouter();
@@ -44,27 +46,33 @@ export default function Profile() {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-100">
-      <Navbar active={active} setActive={setActive} />
+      <div className="md:w-64">
+        <Navbar active={active} setActive={setActive} />
+      </div>
       <main className="flex flex-col p-5 justify-center items-center w-full h-full">
         <h1 className="text-3xl font-bold text-gray-800 mb-4">{active}</h1>
         {loading ? (
-          <p className="text-lg text-gray-500 animate-pulse">Loading profile...</p>
+          <Skeleton className="w-full max-w-md h-40 rounded-lg" />
         ) : user ? (
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <p className="text-lg font-medium text-gray-700 mb-2">
-              <span className="font-semibold text-gray-900">Username:</span> {user.username}
-            </p>
-            <p className="text-lg font-medium text-gray-700 mb-2">
-              <span className="font-semibold text-gray-900">Email:</span> {user.email}
-            </p>
-            <p className="text-lg font-medium text-gray-700 mb-2">
-              <span className="font-semibold text-gray-900">Restaurant:</span> {user.restro_name}
-            </p>
-            <p className="text-lg font-medium text-gray-700">
-              <span className="font-semibold text-gray-900">Role:</span> {user.role.name}
-            </p>
-
-          </div>
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="text-xl">Profile Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <p className="text-lg font-medium text-gray-700">
+                <span className="font-semibold text-gray-900">Username:</span> {user.username}
+              </p>
+              <p className="text-lg font-medium text-gray-700">
+                <span className="font-semibold text-gray-900">Email:</span> {user.email}
+              </p>
+              <p className="text-lg font-medium text-gray-700">
+                <span className="font-semibold text-gray-900">Restaurant:</span> {user.restro_name}
+              </p>
+              <p className="text-lg font-medium text-gray-700">
+                <span className="font-semibold text-gray-900">Role:</span> {user.role.name}
+              </p>
+            </CardContent>
+          </Card>
         ) : (
           <p className="text-red-500">Failed to load profile</p>
         )}

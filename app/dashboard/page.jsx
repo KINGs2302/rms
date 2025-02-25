@@ -39,8 +39,10 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-100">
-      <Navbar active={active} setActive={setActive} />
-      <main className="flex flex-col p-5 justify-center items-center w-screen h-screen">
+      <div className="md:w-64">
+            <Navbar active={active} setActive={setActive} />
+          </div>
+      <main className="flex  flex-col p-5 justify-center items-center w-screen h-screen">
         <h1 className="text-3xl font-semibold">{active}</h1>
         <p>Welcome to the {active}, {loginUser}!</p>
       </main>

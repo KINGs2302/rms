@@ -46,8 +46,7 @@ export default function Navbar({ active, setActive }) {
           {[
             "Dashboard",
             "Kitchen",
-            "Item Menu",
-            "Category",
+            "Menu",
             "Table",
             "Order POS",
             "Billing",
