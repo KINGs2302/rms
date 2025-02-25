@@ -47,7 +47,7 @@ export default function Menu() {
 
       {/* Add Item Button */}
       <button
-        className="absolute top-5 right-5 px-5 py-2 bg-gray-700 text-white rounded-lg shadow-md hover:bg-green-700 transition"
+        className="absolute top-5 right-5 px-5 py-2 bg-gray-700 text-white rounded-lg shadow-md hover:bg-gray-300 hover:text-black transition"
         onClick={() => {
           setNewItem({ ...newItem, category: selectedCategory !== "All" ? selectedCategory : "" });
           setIsItemModalOpen(true);
@@ -76,7 +76,7 @@ export default function Menu() {
         </div>
         <div className="p-3">
           <button
-            className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg shadow-md hover:bg-blue-700 transition"
+            className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg shadow-md hover:bg-gray-300 hover:text-black transition"
             onClick={() => setIsCategoryModalOpen(true)}
           >
             + Add Category
