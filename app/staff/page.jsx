@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import Navbar from "../dashboard/navbar/page";
+import "react-toastify/dist/ReactToastify.css";
+import { ToastContainer, toast } from "react-toastify";
 
 export default function EmployeeRegister() {
   const [active, setActive] = useState("Employee Register");
@@ -68,12 +70,12 @@ export default function EmployeeRegister() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      alert("Employee updated successfully!");
+      toast.success("Employee updated successfully!");
       setShowUpdateDialog(false);
       fetchEmployees();
     } catch (error) {
       console.error("Error updating employee:", error);
-      alert("Failed to update employee");
+      toast.error("Failed to update employee");
     }
   };
 
@@ -86,7 +88,7 @@ export default function EmployeeRegister() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      alert(`${response.data.username} Employee deleted successfully!`);
+      toast.success(`${response.data.username} Employee deleted successfully!`);
       fetchEmployees();
     } catch (error) {
       console.error("Error deleting employee:", error);
@@ -104,11 +106,11 @@ export default function EmployeeRegister() {
       const restro_name = localStorage.getItem("restroname");
 
       if (!token) {
-        alert("Authentication token missing. Please log in.");
+        toast.error("Authentication token missing. Please log in.");
         return;
       }
       if (!restro_name) {
-        alert("Restaurant name is missing. Please check your settings.");
+        toast.error("Restaurant name is missing. Please check your settings.");
         return;
       }
 
@@ -122,12 +124,12 @@ export default function EmployeeRegister() {
         }
       );
 
-      alert("Employee registered successfully!");
+      toast.success("Employee registered successfully!");
       fetchEmployees();
       setFormData({ username: "", email: "", password: "", role: 3 });
     } catch (error) {
       console.error("Error registering employee:", error.response?.data || error.message);
-      alert("Failed to register employee");
+      toast.error("Failed to register employee");
     }
   };
 
@@ -153,6 +155,7 @@ export default function EmployeeRegister() {
 
   return (
     <div className="flex h-screen w-screen bg-gray-100">
+      <ToastContainer />
       {/* Left sidebar (Navigation) */}
       <div className="fixed top-0 left-0 h-full w-full md:w-64 bg-white shadow-md">
         <Navbar active={active} setActive={setActive} />
