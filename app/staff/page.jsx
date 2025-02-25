@@ -5,7 +5,7 @@ import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import Navbar from "../dashboard/navbar/page";
 
 export default function EmployeeRegister() {
-  const [active, setActive] = useState("Staff");
+  const [active, setActive] = useState("Employee Register");
   const [employees, setEmployees] = useState([]);
   const [formData, setFormData] = useState({
     username: "",
@@ -14,13 +14,14 @@ export default function EmployeeRegister() {
     role: 3,
   });
 
+  // State for update dialog
   const [showUpdateDialog, setShowUpdateDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [updateData, setUpdateData] = useState({
     username: "",
     email: "",
     password: "",
-    status: "Active",
+    status: "Active", // Active or Deactive
   });
 
   useEffect(() => {
@@ -31,6 +32,7 @@ export default function EmployeeRegister() {
     try {
       const token = localStorage.getItem("token");
       const restro_name = localStorage.getItem("restroname");
+
       const response = await axios.get(
         `https://restro-backend-0ozo.onrender.com/api/users?filters[restro_name][$eq]=${restro_name}&populate[role][fields]=name`,
         {
@@ -43,14 +45,19 @@ export default function EmployeeRegister() {
     }
   };
 
+  // Update employee details including status
   const updateEmployee = async () => {
     if (!selectedEmployee) return;
     try {
       const token = localStorage.getItem("token");
+
+      // Build the payload
       const payload = {
         username: updateData.username,
         email: updateData.email,
+        // Only include password if provided
         ...(updateData.password && { password: updateData.password }),
+        // "blocked" is true if status is Deactive, false if Active
         blocked: updateData.status === "Deactive",
       };
 
@@ -70,16 +77,16 @@ export default function EmployeeRegister() {
     }
   };
 
-  const deleteEmployee = async (id) => {
+  const deleteemployee = async (id) => {
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(
+      const response = await axios.delete(
         `https://restro-backend-0ozo.onrender.com/api/users/${id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      alert("Employee deleted successfully!");
+      alert(`${response.data.username} Employee deleted successfully!`);
       fetchEmployees();
     } catch (error) {
       console.error("Error deleting employee:", error);
@@ -95,11 +102,18 @@ export default function EmployeeRegister() {
     try {
       const token = localStorage.getItem("token");
       const restro_name = localStorage.getItem("restroname");
-      if (!token || !restro_name) {
-        alert("Missing authentication details. Please log in again.");
+
+      if (!token) {
+        alert("Authentication token missing. Please log in.");
         return;
       }
+      if (!restro_name) {
+        alert("Restaurant name is missing. Please check your settings.");
+        return;
+      }
+
       const updatedFormData = { ...formData, restro_name };
+
       await axios.post(
         "https://restro-backend-0ozo.onrender.com/api/users",
         updatedFormData,
@@ -107,39 +121,46 @@ export default function EmployeeRegister() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
       alert("Employee registered successfully!");
       fetchEmployees();
       setFormData({ username: "", email: "", password: "", role: 3 });
     } catch (error) {
-      console.error("Error registering employee:", error);
+      console.error("Error registering employee:", error.response?.data || error.message);
       alert("Failed to register employee");
     }
   };
 
-  function groupEmployeesByRole(employees) {
-    const roleMap = { 1: "Admin", 3: "Chef", 4: "Waiter" };
-    const sortedEmployees = [...employees].sort((a, b) => {
-      if (a.blocked === b.blocked) {
-        return a.username.localeCompare(b.username);
-      }
-      return a.blocked ? 1 : -1;
+  // Open update dialog and pre-fill updateData with selected employee's details.
+  const openUpdateDialog = (employee) => {
+    setSelectedEmployee(employee);
+    setUpdateData({
+      username: employee.username,
+      email: employee.email,
+      password: "", // Leave blank to keep current password
+      status: employee.blocked ? "Deactive" : "Active",
     });
-    return sortedEmployees.reduce((acc, emp) => {
-      const roleName = roleMap[emp.role?.id] || "Unknown";
-      if (!acc[roleName]) acc[roleName] = [];
-      acc[roleName].push(emp);
-      return acc;
-    }, {});
-  }
+    setShowUpdateDialog(true);
+  };
+
+  // Update change handler for update dialog
+  const handleUpdateChange = (e) => {
+    setUpdateData({ ...updateData, [e.target.name]: e.target.value });
+  };
+
+  // Group employees by role and sort them as requested.
+  const groupedEmployees = groupEmployeesByRole(employees);
 
   return (
     <div className="flex h-screen w-screen bg-gray-100">
+      {/* Left sidebar (Navigation) */}
       <div className="fixed top-0 left-0 h-full w-full md:w-64 bg-white shadow-md">
         <Navbar active={active} setActive={setActive} />
       </div>
 
+      {/* Main content area */}
       <main className="w-full flex-1 p-5 ml-0 md:ml-64 flex gap-5">
-        {/* Employee Registration Form */}
+        {/* Employee Registration Form (Sticky on the left side) */}
         <div className="bg-white p-6 rounded-md shadow-md w-full md:w-1/3 h-fit sticky top-5">
           <h2 className="text-2xl font-semibold mb-4">Register Employee</h2>
           <form onSubmit={handleSubmit}>
@@ -180,82 +201,40 @@ export default function EmployeeRegister() {
               <option value="3">Chef</option>
               <option value="4">Waiter</option>
             </select>
-            <button
-              type="submit"
-              className="w-full p-2 bg-blue-500 text-white rounded-md"
-            >
+            <button type="submit" className="w-full p-2 bg-blue-500 text-white rounded-md">
               Register
             </button>
           </form>
         </div>
 
-        {/* Employee List */}
-        <div className="w-full md:w-2/3 overflow-y-auto max-h-[100vh] p-2 bg-gray-100 rounded-md">
-          {Object.entries(groupEmployeesByRole(employees)).map(
-            ([role, emps]) => (
-              <div
-                key={role}
-                className="bg-white p-4 rounded-md shadow-md mb-4"
-              >
-                <h3 className="text-xl font-semibold mb-3">{role}</h3>
-                <table className="w-full border-collapse border border-gray-300">
-                  <thead>
-                    <tr className="bg-gray-200">
-                      <th className="border p-2">Username</th>
-                      <th className="border p-2">Email</th>
-                      <th className="border p-2">Status</th>
-                      {role !== "Admin" && (
-                        <th className="border p-2">Actions</th>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {emps.length > 0 ? (
-                      emps.map((emp) => (
-                        <tr key={emp.id} className="text-center">
-                          <td className="border p-2">{emp.username}</td>
-                          <td className="border p-2">{emp.email}</td>
-                          <td className="border p-2">
-                            <div className="flex items-center gap-1 justify-center">
-                              <span
-                                className={`w-3 h-3 rounded-full ${
-                                  emp.blocked ? "bg-red-500" : "bg-green-500"
-                                }`}
-                              ></span>
-                              <span>{emp.blocked ? "Deactive" : "Active"}</span>
-                            </div>
-                          </td>
-                          {role !== "Admin" && (
-                            <td className="border p-2">
-                              <div className="flex justify-center gap-3">
-                                <PencilIcon
-                                  className="w-5 h-5 text-blue-500 cursor-pointer"
-                                  onClick={() => openUpdateDialog(emp)}
-                                />
-                                <TrashIcon
-                                  className="w-5 h-5 text-red-500 cursor-pointer"
-                                  onClick={() => deleteEmployee(emp.id)}
-                                />
-                              </div>
-                            </td>
-                          )}
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td
-                          colSpan={role !== "Admin" ? "4" : "3"}
-                          className="border p-2 text-gray-600"
-                        >
-                          No employees in this role.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )
-          )}
+        {/* Right side: Admin, Chef, Waiter sections */}
+        <div className="flex-1 overflow-y-auto max-h-[100vh] space-y-6 pr-2">
+          {/* Admin Section */}
+          <SectionHeader title="Admin" />
+          <EmployeeTable
+            employees={groupedEmployees["Admin"] || []}
+            openUpdateDialog={openUpdateDialog}
+            deleteemployee={deleteemployee}
+            role="Admin"
+          />
+
+          {/* Chef Section */}
+          <SectionHeader title="Chef" />
+          <EmployeeTable
+            employees={groupedEmployees["Chef"] || []}
+            openUpdateDialog={openUpdateDialog}
+            deleteemployee={deleteemployee}
+            role="Chef"
+          />
+
+          {/* Waiter Section */}
+          <SectionHeader title="Waiter" />
+          <EmployeeTable
+            employees={groupedEmployees["Waiter"] || []}
+            openUpdateDialog={openUpdateDialog}
+            deleteemployee={deleteemployee}
+            role="Waiter"
+          />
         </div>
       </main>
 
@@ -288,10 +267,7 @@ export default function EmployeeRegister() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium">
-                    Password{" "}
-                    <span className="text-xs text-gray-500">
-                      (Leave blank to keep current)
-                    </span>
+                    Password <span className="text-xs text-gray-500">(Leave blank to keep current)</span>
                   </label>
                   <input
                     type="password"
@@ -316,16 +292,10 @@ export default function EmployeeRegister() {
               </div>
             )}
             <div className="flex justify-end gap-2 mt-4">
-              <button
-                onClick={() => setShowUpdateDialog(false)}
-                className="px-4 py-2 bg-gray-300 rounded-md"
-              >
+              <button onClick={() => setShowUpdateDialog(false)} className="px-4 py-2 bg-gray-300 rounded-md">
                 Cancel
               </button>
-              <button
-                onClick={updateEmployee}
-                className="px-4 py-2 bg-blue-500 text-white rounded-md"
-              >
+              <button onClick={updateEmployee} className="px-4 py-2 bg-blue-500 text-white rounded-md">
                 Update
               </button>
             </div>
@@ -334,4 +304,92 @@ export default function EmployeeRegister() {
       )}
     </div>
   );
+}
+
+/** --- Helper Components & Functions --- **/
+
+// Displays a header for each section (Admin, Chef, Waiter).
+function SectionHeader({ title }) {
+  return (
+    <h2 className="text-xl font-semibold mb-2 border-b pb-1">{title}</h2>
+  );
+}
+
+// Renders a table for a specific role (Admin, Chef, Waiter).
+function EmployeeTable({ employees, openUpdateDialog, deleteemployee, role }) {
+  return (
+    <div className="bg-white rounded-md shadow-md overflow-x-auto">
+      <table className="w-full border-collapse border border-gray-300">
+        <thead>
+          <tr className="bg-gray-200">
+            <th className="border p-2">Username</th>
+            <th className="border p-2">Email</th>
+            <th className="border p-2">Status</th>
+            {role !== "Admin" && <th className="border p-2">Actions</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {employees.length > 0 ? (
+            employees.map((emp) => (
+              <tr key={emp.email} className="text-center">
+                <td className="border p-2">{emp.username}</td>
+                <td className="border p-2">{emp.email}</td>
+                <td className="border p-2 flex items-center justify-center gap-1">
+                  <span
+                    className={`w-3 h-3 rounded-full ${emp.blocked ? "bg-red-500" : "bg-green-500"}`}
+                  ></span>
+                  {emp.blocked ? "Deactive" : "Active"}
+                </td>
+                {role !== "Admin" && (
+                  <td>
+                  <div className="border p-2 flex justify-center gap-3">
+                    <PencilIcon
+                      className="w-5 h-5 text-blue-500 cursor-pointer"
+                      onClick={() => openUpdateDialog(emp)}
+                    />
+                    <TrashIcon
+                      className="w-5 h-5 text-red-500 cursor-pointer"
+                      onClick={() => deleteemployee(emp.id)}
+                    />
+                  </div>
+                  </td>
+                )}
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={role !== "Admin" ? "4" : "3"} className="border p-2 text-gray-600">
+                No employees in this role.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// Groups employees by role while sorting them so that:
+// 1. Active employees (blocked = false) come first,
+// 2. Then Deactive employees (blocked = true),
+// 3. Within the same status, sort by username in ascending order.
+function groupEmployeesByRole(employees) {
+  const roleMap = { 1: "Admin", 3: "Chef", 4: "Waiter" };
+
+  const sortedEmployees = [...employees].sort((a, b) => {
+    // Sort by blocked status (false first), then by username
+    if (a.blocked === b.blocked) {
+      return a.username.localeCompare(b.username);
+    }
+    return a.blocked ? 1 : -1;
+  });
+
+  return sortedEmployees.reduce((acc, emp) => {
+    const roleName = roleMap[emp.role?.id] || "Unknown";
+    if (!acc[roleName]) {
+      acc[roleName] = [];
+    }
+    acc[roleName].push(emp);
+    return acc;
+  }, {});
 }
