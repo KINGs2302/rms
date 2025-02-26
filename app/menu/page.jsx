@@ -15,12 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ToastContainer, toast } from "react-toastify";
 
-const sampleMenu = [
-  // { id: 1, name: "Paneer Tikka", price: "$10", category: "Punjabi", image: "/paneer-tikka.jpg" },
-  // { id: 2, name: "Dosa", price: "$8", category: "South", image: "/dosa.jpg" },
-  // { id: 3, name: "Pasta", price: "$12", category: "Italian", image: "/pasta.jpg" },
-  // { id: 4, name: "Spring Rolls", price: "$7", category: "Chinese", image: "/spring-rolls.jpg" },
-];
+const sampleMenu = [];
 
 export default function Menu() {
   // Store categories as objects: { id, category }
@@ -61,7 +56,7 @@ export default function Menu() {
       const categoriesData = response.data.data.map((cat) => ({
         id: cat.id,
         category: cat.category,
-        documentId:cat.documentId,
+        documentId: cat.documentId,
       }));
       setCategories(categoriesData);
     } catch (error) {
@@ -98,14 +93,19 @@ export default function Menu() {
       setNewCategory("");
       setIsCategoryModalOpen(false);
     } catch (error) {
-      console.error("Error adding category", error.response?.data || error.message);
+      console.error(
+        "Error adding category",
+        error.response?.data || error.message
+      );
       toast.error("Failed to add category");
     }
   };
 
   // Delete only the currently selected category (if not "All")
   const deleteSelectedCategory = async () => {
-    const selectedCatObj = categories.find((cat) => cat.category === selectedCategory);
+    const selectedCatObj = categories.find(
+      (cat) => cat.category === selectedCategory
+    );
     console.log(selectedCatObj);
     if (!selectedCatObj) {
       toast.error("No category selected for deletion.");
@@ -117,15 +117,21 @@ export default function Menu() {
         toast.error("Authentication token missing. Please log in.");
         return;
       }
-      await axios.delete(`https://restro-backend-0ozo.onrender.com/api/categories/${selectedCatObj.documentId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.delete(
+        `https://restro-backend-0ozo.onrender.com/api/categories/${selectedCatObj.documentId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       toast.success("Category deleted successfully!");
       // Reset selection to "All" after deletion
       setSelectedCategory("All");
       fetchCategories();
     } catch (error) {
-      console.error("Error deleting category", error.response?.data || error.message);
+      console.error(
+        "Error deleting category",
+        error.response?.data || error.message
+      );
       toast.error("Failed to delete category");
     }
   };
@@ -159,7 +165,9 @@ export default function Menu() {
 
       {/* Sidebar Categories */}
       <aside className="w-1/6 mb-2 bg-gray-200 h-full flex flex-col transition-transform duration-300">
-        <h2 className="text-xl p-5 text-right font-semibold text-gray-800">Categories</h2>
+        <h2 className="text-xl p-5 text-right font-semibold text-gray-800">
+          Categories
+        </h2>
         <div className="flex-1 overflow-y-auto px-3">
           {categories.map((cat) => (
             <button
@@ -197,10 +205,15 @@ export default function Menu() {
 
       {/* Menu Items */}
       <main className="flex-1 p-5 flex flex-wrap gap-5 justify-center items-start overflow-y-auto">
-        <h1 className="text-2xl font-bold w-full text-center">{selectedCategory} Menu</h1>
+        <h1 className="text-2xl font-bold w-full text-center">
+          {selectedCategory} Menu
+        </h1>
         <div className="flex flex-wrap gap-5 justify-center">
           {filteredMenu.map((item) => (
-            <div key={item.id} className="bg-white p-4 rounded-2xl shadow-md w-64 text-center">
+            <div
+              key={item.id}
+              className="bg-white p-4 rounded-2xl shadow-md w-64 text-center"
+            >
               <Image
                 src={item.image}
                 alt={item.name}
@@ -233,10 +246,16 @@ export default function Menu() {
             className="mt-2 border p-2 w-full rounded-lg"
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCategoryModalOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsCategoryModalOpen(false)}
+            >
               Cancel
             </Button>
-            <Button onClick={addCategories} className="bg-blue-600 text-white hover:bg-blue-700">
+            <Button
+              onClick={addCategories}
+              className="bg-blue-600 text-white hover:bg-blue-700"
+            >
               Add Category
             </Button>
           </DialogFooter>
@@ -270,18 +289,37 @@ export default function Menu() {
             onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
             className="mt-2 border p-2 w-full rounded-lg"
           />
-          <Input
-            type="text"
-            placeholder="Image URL"
-            value={newItem.image}
-            onChange={(e) => setNewItem({ ...newItem, image: e.target.value })}
+
+          {/* Image Upload Input */}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files[0];
+              if (file) {
+                setNewItem({ ...newItem, image: file });
+              }
+            }}
             className="mt-2 border p-2 w-full rounded-lg"
           />
+
+          {/* Image Preview */}
+          {newItem.image && (
+            <img
+              src={URL.createObjectURL(newItem.image)}
+              alt="Preview"
+              className="mt-2 w-full h-40 object-cover rounded-lg"
+            />
+          )}
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsItemModalOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleAddItem} className="bg-green-600 text-white hover:bg-green-700">
+            <Button
+              onClick={handleAddItem}
+              className="bg-green-600 text-white hover:bg-green-700"
+            >
               Add Item
             </Button>
           </DialogFooter>
