@@ -4,15 +4,49 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export default function Navbar({ active, setActive }) {
+export default function Navbar({ active, setActive, userRole }) {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
 
   const handleLogout = () => {
-    localStorage.removeItem("loginuser");
     localStorage.removeItem("token");
-    router.replace("/");
+    localStorage.removeItem("loginuser");
+    localStorage.removeItem("restroname");
+    
+    // Force reload to update state immediately
+    window.location.href = "/";
   };
+
+  const adminLinks = [
+    "Dashboard",
+    "Kitchen",
+    "Menu",
+    "Table",
+    "Order POS",
+    "Billing",
+    "Staff",
+    "Profile",
+    "Settings",
+  ];
+
+  const chefLinks = ["Dashboard", "Kitchen", "Profile", "Settings"];
+
+  const waiterLinks = ["Dashboard", "Menu", "Table", "Profile", "Settings"];
+
+  const getLinks = (role) => {
+    switch (role) {
+      case "admin":
+        return adminLinks;
+      case "chef":
+        return chefLinks;
+      case "waiter":
+        return waiterLinks;
+      default:
+        return [];
+    }
+  };
+
+  const links = getLinks(userRole);
 
   return (
     <>
@@ -42,18 +76,8 @@ export default function Navbar({ active, setActive }) {
         </button>
 
         <h2 className="text-2xl font-semibold mb-5">Dashboard</h2>
-        <ul className="space-y-3">
-          {[
-            "Dashboard",
-            "Kitchen",
-            "Menu",
-            "Table",
-            "Order POS",
-            "Billing",
-            "Staff",
-            "Profile",
-            "Settings",
-          ].map((item) => (
+         <ul className="space-y-3">
+          {links.map((item) => (
             <li key={item}>
               <Link
                 href={`/${item.toLowerCase().replace(/\s+/g, "-")}`}

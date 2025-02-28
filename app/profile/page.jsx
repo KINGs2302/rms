@@ -45,11 +45,8 @@ export default function Profile() {
   }, [router]);
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-gray-100">
-      <div className="md:w-64">
-        <Navbar active={active} setActive={setActive} />
-      </div>
-      <main className="flex flex-col p-5 justify-center items-center w-full h-full">
+    <div className="flex flex-col md:flex-row min-h-full bg-gray-100">
+      <main className="flex flex-col justify-center items-center w-full h-full">
         <h1 className="text-3xl font-bold text-gray-800 mb-4">{active}</h1>
         {loading ? (
           <Skeleton className="w-full max-w-md h-40 rounded-lg" />

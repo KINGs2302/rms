@@ -7,7 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer, toast } from "react-toastify";
 
 export default function EmployeeRegister() {
-  const [active, setActive] = useState("Employee Register");
+  const [active, setActive] = useState("Staff");
   const [employees, setEmployees] = useState([]);
   const [formData, setFormData] = useState({
     username: "",
@@ -154,17 +154,14 @@ export default function EmployeeRegister() {
   const groupedEmployees = groupEmployeesByRole(employees);
 
   return (
-    <div className="flex h-screen w-screen bg-gray-100">
+    <div className="flex flex-col pl-0 md:flex-row min-h-screen bg-gray-100 min-w-full">
       <ToastContainer />
       {/* Left sidebar (Navigation) */}
-      <div className="fixed top-0 left-0 h-full w-full md:w-64 bg-white shadow-md">
-        <Navbar active={active} setActive={setActive} />
-      </div>
-
+  
       {/* Main content area */}
-      <main className="w-full flex-1 p-5 ml-0 md:ml-64 flex gap-5">
+      <main className=" relative flex-1 p-5 pl-0 mt-16 md:mt-0 md:ml-64 flex flex-col md:flex-row gap-5 z-50 md:z-auto ">
         {/* Employee Registration Form (Sticky on the left side) */}
-        <div className="bg-white p-6 rounded-md shadow-md w-full md:w-1/3 h-fit sticky top-5">
+        <div className="bg-white p-6  rounded-md shadow-md w-full md:w-1/3 h-fit sticky top-5 z-50">
           <h2 className="text-2xl font-semibold mb-4">Register Employee</h2>
           <form onSubmit={handleSubmit}>
             <input
@@ -209,7 +206,7 @@ export default function EmployeeRegister() {
             </button>
           </form>
         </div>
-
+  
         {/* Right side: Admin, Chef, Waiter sections */}
         <div className="flex-1 overflow-y-auto max-h-[100vh] space-y-6 pr-2">
           {/* Admin Section */}
@@ -220,7 +217,7 @@ export default function EmployeeRegister() {
             deleteemployee={deleteemployee}
             role="Admin"
           />
-
+  
           {/* Chef Section */}
           <SectionHeader title="Chef" />
           <EmployeeTable
@@ -229,7 +226,7 @@ export default function EmployeeRegister() {
             deleteemployee={deleteemployee}
             role="Chef"
           />
-
+  
           {/* Waiter Section */}
           <SectionHeader title="Waiter" />
           <EmployeeTable
@@ -240,7 +237,7 @@ export default function EmployeeRegister() {
           />
         </div>
       </main>
-
+  
       {/* Update Dialog */}
       {showUpdateDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
