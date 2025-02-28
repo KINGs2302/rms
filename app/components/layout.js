@@ -12,19 +12,24 @@ export default function Layout({ children }) {
   const [userRole, setUserRole] = useState("");
 
   useEffect(() => {
+    if (typeof window === "undefined") return; // ✅ Prevent SSR error
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      router.replace("/");
+      return;
+    }
+
     const fetchUser = async () => {
-      const token = localStorage.getItem("token");
-  
-      if (!token) {
-        router.replace("/");
-        return;
-      }
-  
       try {
-        const response = await axios.get("https://restro-backend-0ozo.onrender.com/api/users/me?populate=role", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-  
+        const response = await axios.get(
+          "https://restro-backend-0ozo.onrender.com/api/users/me?populate=role",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
         if (response.data.valid) {
           localStorage.removeItem("token");
           router.replace("/");
@@ -38,17 +43,20 @@ export default function Layout({ children }) {
         router.replace("/");
       }
     };
-  
+
     fetchUser();
-  }, [router, localStorage.getItem("token")]); // Re-run when token changes
-  
+  }, [router]); // ✅ Removed direct `localStorage.getItem("token")` from dependency
 
   // Hide Navbar if not admin or on login page
-  const hideNavbar =  pathname === "/";
+  const hideNavbar = pathname === "/";
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-100">
-      {!hideNavbar && <div className=""><Navbar active={active} setActive={setActive} userRole={userRole} /></div>}
+      {!hideNavbar && (
+        <div>
+          <Navbar active={active} setActive={setActive} userRole={userRole} />
+        </div>
+      )}
       <main className="flex flex-col p-5 justify-center items-center w-full h-full">
         {children}
       </main>
