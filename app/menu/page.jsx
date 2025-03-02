@@ -15,7 +15,9 @@ import { Button } from "@/components/ui/button";
 import { ToastContainer, toast } from "react-toastify";
 
 export default function Menu() {
-  const [categories, setCategories] = useState([{ id: "all", category: "All" }]);
+  const [categories, setCategories] = useState([
+    { id: "all", category: "All" },
+  ]);
   const [menuItems, setMenuItems] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -26,6 +28,7 @@ export default function Menu() {
     category: "",
     price: "",
     quantity: "",
+    pera: "",
     image: null, // will store file object
   });
 
@@ -102,7 +105,10 @@ export default function Menu() {
       setNewCategory("");
       setIsCategoryModalOpen(false);
     } catch (error) {
-      console.error("Error adding category:", error.response?.data || error.message);
+      console.error(
+        "Error adding category:",
+        error.response?.data || error.message
+      );
       toast.error("Failed to add category");
     }
   };
@@ -130,7 +136,10 @@ export default function Menu() {
       setSelectedCategory("All");
       fetchCategories();
     } catch (error) {
-      console.error("Error deleting category:", error.response?.data || error.message);
+      console.error(
+        "Error deleting category:",
+        error.response?.data || error.message
+      );
       toast.error("Failed to delete category");
     }
   };
@@ -170,7 +179,13 @@ export default function Menu() {
       const token = localStorage.getItem("token");
       const restro_name = localStorage.getItem("restroname") || "Test";
 
-      if (!newItem.name || !newItem.category || !newItem.price || !newItem.quantity || !newItem.image) {
+      if (
+        !newItem.name ||
+        !newItem.category ||
+        !newItem.price ||
+        !newItem.quantity ||
+        !newItem.image
+      ) {
         toast.error("All fields are required!");
         return;
       }
@@ -185,7 +200,9 @@ export default function Menu() {
         return;
       }
 
-      const categoryObj = categories.find((cat) => cat.category === newItem.category);
+      const categoryObj = categories.find(
+        (cat) => cat.category === newItem.category
+      );
       if (!categoryObj) {
         toast.error("Category not found. Please check the category name.");
         return;
@@ -205,6 +222,7 @@ export default function Menu() {
           restro_name,
           quantity: Number(newItem.quantity),
           category: categoryObj.id,
+          pera: newItem.pera,
           image: imageId,
         },
       };
@@ -299,7 +317,7 @@ export default function Menu() {
               <h3 className="text-lg font-semibold mt-3">{item.item_name}</h3>
               <p className="text-gray-600">{item.category.category}</p>
               <p className="text-blue-600 font-bold">₹ {item.price} Rs.</p>
-              <p className="text-gray-700">Quantity: {item.quantity} ml</p>
+              {/* <p className="text-gray-700">Quantity: {item.quantity} {item.pera}</p> */}
             </div>
           ))}
         </div>
@@ -321,10 +339,16 @@ export default function Menu() {
             className="mt-2 border p-2 w-full rounded-lg"
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCategoryModalOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsCategoryModalOpen(false)}
+            >
               Cancel
             </Button>
-            <Button onClick={addCategories} className="bg-blue-600 text-white hover:bg-blue-700">
+            <Button
+              onClick={addCategories}
+              className="bg-blue-600 text-white hover:bg-blue-700"
+            >
               Add Category
             </Button>
           </DialogFooter>
@@ -340,30 +364,53 @@ export default function Menu() {
             type="text"
             placeholder="Item Name"
             value={newItem.name}
-            onChange={(e) => setNewItem((prev) => ({ ...prev, name: e.target.value }))}
+            onChange={(e) =>
+              setNewItem((prev) => ({ ...prev, name: e.target.value }))
+            }
             className="mt-2 border p-2 w-full rounded-lg"
           />
           <Input
             type="text"
             placeholder="Category"
             value={newItem.category}
-            onChange={(e) => setNewItem((prev) => ({ ...prev, category: e.target.value }))}
+            onChange={(e) =>
+              setNewItem((prev) => ({ ...prev, category: e.target.value }))
+            }
             className="mt-2 border p-2 w-full rounded-lg"
           />
           <Input
             type="number"
             placeholder="Price"
             value={newItem.price}
-            onChange={(e) => setNewItem((prev) => ({ ...prev, price: e.target.value }))}
+            onChange={(e) =>
+              setNewItem((prev) => ({ ...prev, price: e.target.value }))
+            }
             className="mt-2 border p-2 w-full rounded-lg"
           />
-          <Input
-            type="number"
-            placeholder="Quantity (grams)"
-            value={newItem.quantity}
-            onChange={(e) => setNewItem((prev) => ({ ...prev, quantity: e.target.value }))}
-            className="mt-2 border p-2 w-full rounded-lg"
-          />
+          <div className="mt-2 flex gap-2">
+            <Input
+              type="text"
+              placeholder="quantity"
+              value={newItem.quantity}
+              onChange={(e) =>
+                setNewItem((prev) => ({ ...prev, quantity: e.target.value }))
+              }
+              className="border p-2 w-full rounded-lg"
+            />
+
+            <select
+              value={newItem.unit}
+              onChange={(e) =>
+                setNewItem((prev) => ({ ...prev, unit: e.target.value }))
+              }
+              className="border p-2 rounded-lg"
+            >
+              <option value="gm">Grams</option>
+              <option value="ml">Milliliters</option>
+              <option value="kg">Kilograms</option>
+              <option value="ltr">Liters</option>
+            </select>
+          </div>
           <input
             type="file"
             accept="image/*"
@@ -380,7 +427,10 @@ export default function Menu() {
             <Button variant="outline" onClick={() => setIsItemModalOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleAddItem} className="bg-green-600 text-white hover:bg-green-700">
+            <Button
+              onClick={handleAddItem}
+              className="bg-green-600 text-white hover:bg-green-700"
+            >
               Add Item
             </Button>
           </DialogFooter>
