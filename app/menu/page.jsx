@@ -247,19 +247,20 @@ export default function Menu() {
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-100 relative min-w-full">
       <ToastContainer />
-
-      <button
-        className="absolute top-5 right-5 py-2 bg-gray-700 text-white rounded-lg shadow-md hover:bg-gray-300 hover:text-black transition"
-        onClick={() => {
-          setNewItem((prev) => ({
-            ...prev,
-            category: selectedCategory !== "All" ? selectedCategory : "",
-          }));
-          setIsItemModalOpen(true);
-        }}
-      >
-        + Add Item
-      </button>
+      {selectedCategory !== "All" && (
+        <button
+          className="absolute top-5 right-5 py-2 bg-gray-700 text-white rounded-lg shadow-md hover:bg-gray-300 hover:text-black transition"
+          onClick={() => {
+            setNewItem((prev) => ({
+              ...prev,
+              category: selectedCategory,
+            }));
+            setIsItemModalOpen(true);
+          }}
+        >
+          + Add Item
+        </button>
+      )}
 
       <aside className="w-1/6 mb-2 bg-gray-200 h-full flex flex-col transition-transform duration-300">
         <h2 className="text-xl p-5 text-right font-semibold text-gray-800">
@@ -374,11 +375,10 @@ export default function Menu() {
             type="text"
             placeholder="Category"
             value={newItem.category}
-            onChange={(e) =>
-              setNewItem((prev) => ({ ...prev, category: e.target.value }))
-            }
-            className="mt-2 border p-2 w-full rounded-lg"
+            readOnly
+            className="mt-2 border p-2 w-full rounded-lg bg-gray-100 cursor-text"
           />
+
           <Input
             type="number"
             placeholder="Price"
