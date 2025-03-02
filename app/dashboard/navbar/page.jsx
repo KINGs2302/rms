@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -12,41 +12,32 @@ export default function Navbar({ active, setActive, userRole }) {
     localStorage.removeItem("token");
     localStorage.removeItem("loginuser");
     localStorage.removeItem("restroname");
-    
-    // Force reload to update state immediately
-    window.location.href = "/";
+    router.replace("/"); // ✅ Smoother navigation
   };
 
-  const adminLinks = [
-    "Dashboard",
-    "Kitchen",
-    "Menu",
-    "Table",
-    "Order POS",
-    "Billing",
-    "Staff",
-    "Profile",
-    "Settings",
-  ];
+  // Define role-based navigation in an object for cleaner code
+  const roleLinks = {
+    admin: ["Dashboard", "Kitchen", "Menu", "Table", "Order POS", "Billing", "Staff", "Profile", "Settings"],
+    chef: ["Dashboard", "Kitchen", "Profile", "Settings"],
+    waiter: ["Dashboard", "Menu", "Table", "Profile", "Settings"],
+  };
 
-  const chefLinks = ["Dashboard", "Kitchen", "Profile", "Settings"];
+  const links = roleLinks[userRole] || [];
 
-  const waiterLinks = ["Dashboard", "Menu", "Table", "Profile", "Settings"];
+  // Close sidebar on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
 
-  const getLinks = (role) => {
-    switch (role) {
-      case "admin":
-        return adminLinks;
-      case "chef":
-        return chefLinks;
-      case "waiter":
-        return waiterLinks;
-      default:
-        return [];
+    if (isOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+    } else {
+      document.removeEventListener("keydown", handleKeyDown);
     }
-  };
 
-  const links = getLinks(userRole);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
 
   return (
     <>
@@ -62,6 +53,7 @@ export default function Navbar({ active, setActive, userRole }) {
       <button
         className="md:hidden fixed top-4 left-4 z-50 bg-gray-900 text-white p-2 rounded"
         onClick={() => setIsOpen(!isOpen)}
+        aria-label="Toggle menu"
       >
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
@@ -76,7 +68,8 @@ export default function Navbar({ active, setActive, userRole }) {
         </button>
 
         <h2 className="text-2xl font-semibold mb-5">Dashboard</h2>
-         <ul className="space-y-3">
+
+        <ul className="space-y-3">
           {links.map((item) => (
             <li key={item}>
               <Link
@@ -94,6 +87,7 @@ export default function Navbar({ active, setActive, userRole }) {
             </li>
           ))}
         </ul>
+
         <button
           onClick={handleLogout}
           className="w-full mt-5 p-2 bg-red-500 hover:bg-red-600 rounded-md"

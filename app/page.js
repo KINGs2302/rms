@@ -3,7 +3,7 @@ import Logines from "./auth/login";
 
 export default function Home() {
   return (
-   <div>
+   <div className="w-full ">
     <Logines/>
    </div>
   );

@@ -1,9 +1,15 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Dashboard() {
   const [active, setActive] = useState("Dashboard");
-  const loginUser = typeof window !== "undefined" ? localStorage.getItem("loginuser") || "User" : "User";
+  const [loginUser, setLoginUser] = useState("User");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setLoginUser(localStorage.getItem("loginuser") || "User");
+    }
+  }, []);
 
   return (
     <>

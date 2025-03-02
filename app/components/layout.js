@@ -57,7 +57,7 @@ export default function Layout({ children }) {
           <Navbar active={active} setActive={setActive} userRole={userRole} />
         </div>
       )}
-      <main className="flex flex-col p-5 justify-center items-center w-full h-full">
+      <main className="flex flex-col justify-center items-center w-full h-full">
         {children}
       </main>
     </div>

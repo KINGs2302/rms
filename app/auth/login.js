@@ -35,7 +35,7 @@ export default function Login() {
         );
 
         if (response.data.valid) {
-          router.replace("/dashboard");
+          router.push("/dashboard");
         } else {
           localStorage.removeItem("token");
         }
@@ -64,7 +64,7 @@ export default function Login() {
         
         setTimeout(() => {
           setLoading(false);
-          router.replace("/dashboard");
+          router.push("/dashboard");
         }, 1500);
       } else {
         toast.error("Invalid login credentials");
@@ -77,7 +77,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-gray-100">
+    <div className="flex flex-col md:flex-row h-screen bg-gray-100 min-w-full">
       <ToastContainer />
       <aside className="w-full md:w-1/3 lg:w-1/4 bg-gray-900 text-white flex items-center justify-center p-5 md:p-10">
         <h2 className="text-xl font-semibold">Welcome</h2>

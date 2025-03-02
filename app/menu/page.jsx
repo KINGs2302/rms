@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Navbar from "../dashboard/navbar/page";
 import Image from "next/image";
 import axios from "axios";
 import {
@@ -15,12 +14,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ToastContainer, toast } from "react-toastify";
 
-// const sampleMenu = [];
-
 export default function Menu() {
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState([{ id: "all", category: "All" }]);
   const [menuItems, setMenuItems] = useState([]);
-  const [active, setActive] = useState("Menu");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
@@ -28,27 +24,29 @@ export default function Menu() {
   const [newItem, setNewItem] = useState({
     name: "",
     category: "",
-    price: 0,
-    quantity: 0,
-    image: null, // Store the file object
+    price: "",
+    quantity: "",
+    image: null, // will store file object
   });
-  
 
   const filteredMenu =
     selectedCategory === "All"
       ? menuItems
-      : menuItems.filter((item) => item.category === selectedCategory);
+      : menuItems.filter((item) => item.category.category === selectedCategory);
 
   useEffect(() => {
     fetchMenuItems();
     fetchCategories();
   }, []);
 
+  // API: fetch menu items
   const fetchMenuItems = async () => {
     try {
-      const restro_name = localStorage.getItem("restroname") || "Test";
+      const restro_name = localStorage.getItem("restroname");
+      const token = localStorage.getItem("token");
       const response = await axios.get(
-        `https://restro-backend-0ozo.onrender.com/api/menus?populate=category&filters[restro_name][$eq]=${restro_name}`
+        `https://restro-backend-0ozo.onrender.com/api/menus?populate=*&filters[restro_name][$eq]=${restro_name}`,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       setMenuItems(response.data.data);
     } catch (error) {
@@ -56,28 +54,27 @@ export default function Menu() {
     }
   };
 
+  // API: fetch categories
   const fetchCategories = async () => {
     try {
       const token = localStorage.getItem("token");
       const restro_name = localStorage.getItem("restroname");
-
       const response = await axios.get(
         `https://restro-backend-0ozo.onrender.com/api/categories?filters[restro_name][$eq]=${restro_name}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       const categoriesData = response.data.data.map((cat) => ({
         id: cat.id,
         category: cat.category,
         documentId: cat.documentId,
       }));
-      setCategories(categoriesData);
+      setCategories([{ id: "all", category: "All" }, ...categoriesData]);
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
   };
 
+  // API: add new category
   const addCategories = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -92,14 +89,12 @@ export default function Menu() {
         return;
       }
 
-      const updatedFormData = { data: { category: newCategory, restro_name } };
+      const payload = { data: { category: newCategory, restro_name } };
 
       await axios.post(
         "https://restro-backend-0ozo.onrender.com/api/categories",
-        updatedFormData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       toast.success("Category added successfully!");
@@ -107,14 +102,12 @@ export default function Menu() {
       setNewCategory("");
       setIsCategoryModalOpen(false);
     } catch (error) {
-      console.error(
-        "Error adding category",
-        error.response?.data || error.message
-      );
+      console.error("Error adding category:", error.response?.data || error.message);
       toast.error("Failed to add category");
     }
   };
 
+  // API: delete selected category
   const deleteSelectedCategory = async () => {
     const selectedCatObj = categories.find(
       (cat) => cat.category === selectedCategory
@@ -131,74 +124,97 @@ export default function Menu() {
       }
       await axios.delete(
         `https://restro-backend-0ozo.onrender.com/api/categories/${selectedCatObj.documentId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success("Category deleted successfully!");
       setSelectedCategory("All");
       fetchCategories();
     } catch (error) {
-      console.error(
-        "Error deleting category",
-        error.response?.data || error.message
-      );
+      console.error("Error deleting category:", error.response?.data || error.message);
       toast.error("Failed to delete category");
     }
   };
 
-  const handleAddItem = async () => {
+  // API: Upload image and return image id
+  const uploadImage = async (file) => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
         toast.error("Authentication token missing. Please log in.");
-        return;
+        return null;
       }
-  
-      const restro_name = localStorage.getItem("restroname") || "Test";
-  
-      if (!newItem.name || !newItem.category || !newItem.price || !newItem.image || !newItem.quantity) {
-        toast.error("All fields are required!");
-        return;
-      }
-  
-      if (isNaN(Number(newItem.price))) {
-        toast.error("Price must be a number!");
-        return;
-      }
-  
-      if (isNaN(Number(newItem.quantity)) || Number(newItem.quantity) <= 0) {
-        toast.error("Quantity must be a positive number!");
-        return;
-      }
-  
-      const categoryObj = categories.find(cat => cat.category === newItem.category);
-      if (!categoryObj) {
-        toast.error("Category not found. Please check the category name.");
-        return;
-      }
-  
-      // ✅ Create FormData for file upload
       const formData = new FormData();
-      formData.append("item_name", newItem.name);
-      formData.append("category", categoryObj.id);
-      formData.append("price", Number(newItem.price));
-      formData.append("quantity", Number(newItem.quantity));
-      formData.append("image", newItem.image); // ✅ File upload
-      formData.append("restro_name", restro_name);
-  
-      // ✅ Send the request as FormData
-      await axios.post(
-        "https://restro-backend-0ozo.onrender.com/api/menus",
+      formData.append("files", file);
+      const response = await axios.post(
+        "https://restro-backend-0ozo.onrender.com/api/upload",
         formData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data", // ✅ Required for file uploads
+            "Content-Type": "multipart/form-data",
           },
         }
       );
-  
+      // Assuming response.data returns an array with file details
+      return response.data[0]?.id || null;
+    } catch (error) {
+      console.error("Error uploading image:", error.response?.data || error);
+      toast.error("Image upload failed");
+      return null;
+    }
+  };
+
+  // API: Add new menu item
+  const handleAddItem = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const restro_name = localStorage.getItem("restroname") || "Test";
+
+      if (!newItem.name || !newItem.category || !newItem.price || !newItem.quantity || !newItem.image) {
+        toast.error("All fields are required!");
+        return;
+      }
+
+      if (isNaN(Number(newItem.price))) {
+        toast.error("Price must be a number!");
+        return;
+      }
+
+      if (isNaN(Number(newItem.quantity)) || Number(newItem.quantity) <= 0) {
+        toast.error("Quantity must be a positive number!");
+        return;
+      }
+
+      const categoryObj = categories.find((cat) => cat.category === newItem.category);
+      if (!categoryObj) {
+        toast.error("Category not found. Please check the category name.");
+        return;
+      }
+
+      // First, upload image and get the image id
+      const imageId = await uploadImage(newItem.image);
+      if (!imageId) {
+        return; // Image upload failed, do not proceed
+      }
+
+      // Build the payload JSON
+      const payload = {
+        data: {
+          item_name: newItem.name,
+          price: Number(newItem.price),
+          restro_name,
+          quantity: Number(newItem.quantity),
+          category: categoryObj.id,
+          image: imageId,
+        },
+      };
+
+      await axios.post(
+        "https://restro-backend-0ozo.onrender.com/api/menus",
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
       toast.success("Menu item added successfully!");
       fetchMenuItems();
       setIsItemModalOpen(false);
@@ -207,8 +223,6 @@ export default function Menu() {
       toast.error("Failed to add menu item. Check console for details.");
     }
   };
-  
-  
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-100 relative min-w-full">
@@ -217,10 +231,10 @@ export default function Menu() {
       <button
         className="absolute top-5 right-5 py-2 bg-gray-700 text-white rounded-lg shadow-md hover:bg-gray-300 hover:text-black transition"
         onClick={() => {
-          setNewItem({
-            ...newItem,
+          setNewItem((prev) => ({
+            ...prev,
             category: selectedCategory !== "All" ? selectedCategory : "",
-          });
+          }));
           setIsItemModalOpen(true);
         }}
       >
@@ -276,26 +290,26 @@ export default function Menu() {
               className="bg-white p-4 rounded-2xl shadow-md w-64 text-center"
             >
               <Image
-                src={item.image}
-                alt={item.name}
+                src={item.image.formats.thumbnail.url}
+                alt="image"
                 width={150}
                 height={150}
                 className="rounded-full mx-auto"
               />
-              <h3 className="text-lg font-semibold mt-3">{item.name}</h3>
-              <p className="text-gray-600">{item.category}</p>
-              <p className="text-blue-600 font-bold">{item.price}</p>
-              <p className="text-gray-700">Quantity: {item.quantity}</p>
+              <h3 className="text-lg font-semibold mt-3">{item.item_name}</h3>
+              <p className="text-gray-600">{item.category.category}</p>
+              <p className="text-blue-600 font-bold">₹ {item.price} Rs.</p>
+              <p className="text-gray-700">Quantity: {item.quantity} ml</p>
             </div>
           ))}
         </div>
       </main>
 
       <Dialog open={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen}>
-        <DialogContent aria-describedby="">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Add New Category</DialogTitle>
-            <p id="add-category-description" className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500">
               Enter the name for the new category below.
             </p>
           </DialogHeader>
@@ -307,16 +321,10 @@ export default function Menu() {
             className="mt-2 border p-2 w-full rounded-lg"
           />
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsCategoryModalOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setIsCategoryModalOpen(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={addCategories}
-              className="bg-blue-600 text-white hover:bg-blue-700"
-            >
+            <Button onClick={addCategories} className="bg-blue-600 text-white hover:bg-blue-700">
               Add Category
             </Button>
           </DialogFooter>
@@ -332,32 +340,28 @@ export default function Menu() {
             type="text"
             placeholder="Item Name"
             value={newItem.name}
-            onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+            onChange={(e) => setNewItem((prev) => ({ ...prev, name: e.target.value }))}
             className="mt-2 border p-2 w-full rounded-lg"
           />
           <Input
             type="text"
             placeholder="Category"
             value={newItem.category}
-            onChange={(e) =>
-              setNewItem({ ...newItem, category: e.target.value })
-            }
+            onChange={(e) => setNewItem((prev) => ({ ...prev, category: e.target.value }))}
             className="mt-2 border p-2 w-full rounded-lg"
           />
           <Input
             type="number"
             placeholder="Price"
             value={newItem.price}
-            onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
+            onChange={(e) => setNewItem((prev) => ({ ...prev, price: e.target.value }))}
             className="mt-2 border p-2 w-full rounded-lg"
           />
           <Input
             type="number"
             placeholder="Quantity (grams)"
             value={newItem.quantity}
-            onChange={(e) =>
-              setNewItem({ ...newItem, quantity: e.target.value })
-            }
+            onChange={(e) => setNewItem((prev) => ({ ...prev, quantity: e.target.value }))}
             className="mt-2 border p-2 w-full rounded-lg"
           />
           <input
@@ -366,20 +370,17 @@ export default function Menu() {
             onChange={(e) => {
               const file = e.target.files[0];
               if (file) {
-                setNewItem({ ...newItem, image: URL.createObjectURL(file) });
+                // store the file object instead of a URL
+                setNewItem((prev) => ({ ...prev, image: file }));
               }
             }}
             className="mt-2 border p-2 w-full rounded-lg"
           />
-
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsItemModalOpen(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={handleAddItem}
-              className="bg-green-600 text-white hover:bg-green-700"
-            >
+            <Button onClick={handleAddItem} className="bg-green-600 text-white hover:bg-green-700">
               Add Item
             </Button>
           </DialogFooter>
