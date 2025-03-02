@@ -28,7 +28,7 @@ export default function Menu() {
     category: "",
     price: "",
     quantity: "",
-    pera: "",
+    parameter: "gm",
     image: null, // will store file object
   });
 
@@ -177,14 +177,15 @@ export default function Menu() {
   const handleAddItem = async () => {
     try {
       const token = localStorage.getItem("token");
-      const restro_name = localStorage.getItem("restroname") || "Test";
+      const restro_name = localStorage.getItem("restroname");
 
       if (
         !newItem.name ||
         !newItem.category ||
         !newItem.price ||
         !newItem.quantity ||
-        !newItem.image
+        !newItem.image ||
+        !newItem.parameter // ✅ Ensure parameter is provided
       ) {
         toast.error("All fields are required!");
         return;
@@ -222,7 +223,7 @@ export default function Menu() {
           restro_name,
           quantity: Number(newItem.quantity),
           category: categoryObj.id,
-          pera: newItem.pera,
+          parameter: newItem.parameter, // ✅ Corrected field name
           image: imageId,
         },
       };
@@ -241,6 +242,7 @@ export default function Menu() {
       toast.error("Failed to add menu item. Check console for details.");
     }
   };
+
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-100 relative min-w-full">
@@ -267,11 +269,10 @@ export default function Menu() {
           {categories.map((cat) => (
             <button
               key={cat.id}
-              className={`p-3 w-full text-right rounded-r-full transition-all duration-300 transform ${
-                selectedCategory === cat.category
-                  ? "text-white mb-1 mt-1 bg-gray-700 scale-110 text-xl font-bold border-solid border-blue-500 border-2"
-                  : "text-gray-700 text-l bg-gray-200 scale-80 opacity-90 text-base border-solid border-2"
-              }`}
+              className={`p-3 w-full text-right rounded-r-full transition-all duration-300 transform ${selectedCategory === cat.category
+                ? "text-white mb-1 mt-1 bg-gray-700 scale-110 text-xl font-bold border-solid border-blue-500 border-2"
+                : "text-gray-700 text-l bg-gray-200 scale-80 opacity-90 text-base border-solid border-2"
+                }`}
               onClick={() => setSelectedCategory(cat.category)}
             >
               {cat.category}
@@ -308,7 +309,7 @@ export default function Menu() {
               className="bg-white p-4 rounded-2xl shadow-md w-64 text-center"
             >
               <Image
-                src={item.image.formats.thumbnail.url}
+                src={item.image.url || item.image.formats.thumbnail.url}
                 alt="image"
                 width={150}
                 height={150}
@@ -317,7 +318,7 @@ export default function Menu() {
               <h3 className="text-lg font-semibold mt-3">{item.item_name}</h3>
               <p className="text-gray-600">{item.category.category}</p>
               <p className="text-blue-600 font-bold">₹ {item.price} Rs.</p>
-              {/* <p className="text-gray-700">Quantity: {item.quantity} {item.pera}</p> */}
+              <p className="text-gray-700">Quantity: {item.quantity} {item.parameter}</p>
             </div>
           ))}
         </div>
@@ -399,9 +400,9 @@ export default function Menu() {
             />
 
             <select
-              value={newItem.unit}
+              value={newItem.parameter} // Change unit to parameter
               onChange={(e) =>
-                setNewItem((prev) => ({ ...prev, unit: e.target.value }))
+                setNewItem((prev) => ({ ...prev, parameter: e.target.value }))
               }
               className="border p-2 rounded-lg"
             >
@@ -409,7 +410,12 @@ export default function Menu() {
               <option value="ml">Milliliters</option>
               <option value="kg">Kilograms</option>
               <option value="ltr">Liters</option>
+              <option value="inch">Inches</option>
+              <option value="pcs">Pieces</option>
             </select>
+
+
+
           </div>
           <input
             type="file"
