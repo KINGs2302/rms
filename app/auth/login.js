@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import Navbar from "../dashboard/navbar/page";
 import {
   Card,
   CardHeader,
@@ -35,6 +35,7 @@ export default function Login() {
         );
 
         if (response.data.valid) {
+          
           router.push("/dashboard");
         } else {
           localStorage.removeItem("token");
@@ -57,13 +58,16 @@ export default function Login() {
       );
 
       if (data.jwt) {
+        console.log(data);
         localStorage.setItem("token", data.jwt);
         localStorage.setItem("loginuser", data.user.username);
         localStorage.setItem("restroname", data.user.restro_name);
+       
         toast.success(`Welcome, ${data.user.username}!`);
         
         setTimeout(() => {
           setLoading(false);
+          //Navbar();
           router.push("/dashboard");
         }, 1500);
       } else {

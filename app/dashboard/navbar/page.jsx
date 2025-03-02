@@ -1,12 +1,16 @@
+
+
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+
 export default function Navbar({ active, setActive, userRole }) {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
+  
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -15,33 +19,31 @@ export default function Navbar({ active, setActive, userRole }) {
     router.replace("/"); // ✅ Smoother navigation
   };
 
-  // Define role-based navigation in an object for cleaner code
+  // Role-based navigation
   const roleLinks = {
     admin: ["Dashboard", "Kitchen", "Menu", "Table", "Order POS", "Billing", "Staff", "Profile", "Settings"],
-    chef: ["Dashboard", "Kitchen", "Profile", "Settings"],
-    waiter: ["Dashboard", "Menu", "Table", "Profile", "Settings"],
+    chef: ["Dashboard","Kitchen", "Profile"],
+    waiter: ["Dashboard", "Order POS", "Profile"],
   };
 
   const links = roleLinks[userRole] || [];
 
-  // Close sidebar on Escape key press
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") setIsOpen(false);
-    };
+  // Handle Escape key press (optimized)
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === "Escape") setIsOpen(false);
+  }, []);
 
+  useEffect(() => {
     if (isOpen) {
       document.addEventListener("keydown", handleKeyDown);
-    } else {
-      document.removeEventListener("keydown", handleKeyDown);
     }
-
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen]);
+  }, [isOpen, handleKeyDown]);
 
   return (
     <>
       {/* Overlay when menu is open */}
+     
       {isOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
@@ -58,12 +60,16 @@ export default function Navbar({ active, setActive, userRole }) {
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
-      {/* Sidebar */}
+      {/* Sidebar Navigation */}
       <aside
-        className={`fixed md:relative w-64 h-full bg-gray-900 text-white p-5 z-50 transition-transform duration-300 
+        className={`fixed md:relative w-64 h-full bg-gray-900 text-white p-5 z-50 transition-transform duration-300 ease-in-out 
         ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
       >
-        <button className="md:hidden absolute top-4 right-4" onClick={() => setIsOpen(false)}>
+        <button
+          className="md:hidden absolute top-4 right-4"
+          onClick={() => setIsOpen(false)}
+          aria-label="Close menu"
+        >
           <X size={24} />
         </button>
 
@@ -98,3 +104,8 @@ export default function Navbar({ active, setActive, userRole }) {
     </>
   );
 }
+
+
+
+
+
