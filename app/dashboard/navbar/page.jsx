@@ -1,34 +1,42 @@
-
-
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-
-export default function Navbar({ active, setActive, userRole }) {
+export default function Navbar({ active, setActive }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
-  
+
+  // Fetch role from localStorage (Simulating API delay)
+  useEffect(() => {
+    const checkRole = async () => {
+      let role;
+      while (!role) {
+        role = localStorage.getItem("role");
+        await new Promise((resolve) => setTimeout(resolve, 500)); // Wait & check again
+      }
+      setUserRole(role);
+      setLoading(false);
+    };
+    checkRole();
+  }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("loginuser");
-    localStorage.removeItem("restroname");
-    router.replace("/"); // ✅ Smoother navigation
+    localStorage.clear();
+    router.replace("/");
   };
 
-  // Role-based navigation
   const roleLinks = {
     admin: ["Dashboard", "Kitchen", "Menu", "Table", "Order POS", "Billing", "Staff", "Profile", "Settings"],
-    chef: ["Dashboard","Kitchen", "Profile"],
+    chef: ["Dashboard", "Kitchen", "Profile"],
     waiter: ["Dashboard", "Order POS", "Profile"],
   };
 
   const links = roleLinks[userRole] || [];
 
-  // Handle Escape key press (optimized)
   const handleKeyDown = useCallback((e) => {
     if (e.key === "Escape") setIsOpen(false);
   }, []);
@@ -40,10 +48,18 @@ export default function Navbar({ active, setActive, userRole }) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, handleKeyDown]);
 
+  // 🔄 Show Loading Spinner until role is fetched
+  if (loading) {
+    return (
+      <div className="flex flex-col justify-center items-center h-screen bg-gray-900 text-white">
+        <div className="loader"></div>
+        <p className="mt-4 text-lg">Loading...</p>
+      </div>
+    );
+  }
+
   return (
     <>
-      {/* Overlay when menu is open */}
-     
       {isOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
@@ -51,7 +67,6 @@ export default function Navbar({ active, setActive, userRole }) {
         ></div>
       )}
 
-      {/* Hamburger Menu Button */}
       <button
         className="md:hidden fixed top-4 left-4 z-50 bg-gray-900 text-white p-2 rounded"
         onClick={() => setIsOpen(!isOpen)}
@@ -60,7 +75,6 @@ export default function Navbar({ active, setActive, userRole }) {
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
-      {/* Sidebar Navigation */}
       <aside
         className={`fixed md:relative w-64 h-full bg-gray-900 text-white p-5 z-50 transition-transform duration-300 ease-in-out 
         ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
@@ -104,8 +118,3 @@ export default function Navbar({ active, setActive, userRole }) {
     </>
   );
 }
-
-
-
-
-

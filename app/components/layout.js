@@ -12,12 +12,12 @@ export default function Layout({ children }) {
   const [userRole, setUserRole] = useState("");
 
   useEffect(() => {
-    if (typeof window === "undefined") return; // ✅ Prevent SSR error
+    if (typeof window === "undefined") return; // ✅ Prevent SSR issues
 
     const token = localStorage.getItem("token");
 
     if (!token) {
-      router.replace("/");
+      router.replace("/"); // Redirect to login if no token
       return;
     }
 
@@ -30,24 +30,26 @@ export default function Layout({ children }) {
           }
         );
 
-        if (response.data.valid) {
+        if (!response.data || !response.data.role) {
           localStorage.removeItem("token");
           router.replace("/");
         } else {
           const user = response.data;
           setLoginUser(user.username || "User");
           setUserRole(user.role.name);
+          localStorage.setItem("role", user.role.name);
         }
-      } catch {
+      } catch (error) {
+        console.error("Error fetching user:", error);
         localStorage.removeItem("token");
         router.replace("/");
       }
     };
 
     fetchUser();
-  }, [router]); // ✅ Removed direct `localStorage.getItem("token")` from dependency
+  }, [pathname]); // ✅ Stable dependency (only pathname)
 
-  // Hide Navbar if not admin or on login page
+  // Hide Navbar on login page
   const hideNavbar = pathname === "/";
 
   return (
