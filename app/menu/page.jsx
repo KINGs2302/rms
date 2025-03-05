@@ -3,16 +3,12 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import axios from "axios";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import Category from "./Category";
+import { ToastContainer, toast } from "react-toastify";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ToastContainer, toast } from "react-toastify";
+import { Pencil, Trash2 } from "lucide-react";
 
 export default function Menu() {
   const [categories, setCategories] = useState([
@@ -20,10 +16,10 @@ export default function Menu() {
   ]);
   const [menuItems, setMenuItems] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
-  const [newCategory, setNewCategory] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false); // new state to track edit mode
   const [newItem, setNewItem] = useState({
+    id: "",
     name: "",
     category: "",
     price: "",
@@ -74,73 +70,6 @@ export default function Menu() {
       setCategories([{ id: "all", category: "All" }, ...categoriesData]);
     } catch (error) {
       console.error("Error fetching categories:", error);
-    }
-  };
-
-  // API: add new category
-  const addCategories = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const restro_name = localStorage.getItem("restroname");
-
-      if (!token) {
-        toast.error("Authentication token missing. Please log in.");
-        return;
-      }
-      if (!restro_name) {
-        toast.error("Restaurant name is missing. Please check your settings.");
-        return;
-      }
-
-      const payload = { data: { category: newCategory, restro_name } };
-
-      await axios.post(
-        "https://restro-backend-0ozo.onrender.com/api/categories",
-        payload,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      toast.success("Category added successfully!");
-      fetchCategories();
-      setNewCategory("");
-      setIsCategoryModalOpen(false);
-    } catch (error) {
-      console.error(
-        "Error adding category:",
-        error.response?.data || error.message
-      );
-      toast.error("Failed to add category");
-    }
-  };
-
-  // API: delete selected category
-  const deleteSelectedCategory = async () => {
-    const selectedCatObj = categories.find(
-      (cat) => cat.category === selectedCategory
-    );
-    if (!selectedCatObj) {
-      toast.error("No category selected for deletion.");
-      return;
-    }
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        toast.error("Authentication token missing. Please log in.");
-        return;
-      }
-      await axios.delete(
-        `https://restro-backend-0ozo.onrender.com/api/categories/${selectedCatObj.documentId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success("Category deleted successfully!");
-      setSelectedCategory("All");
-      fetchCategories();
-    } catch (error) {
-      console.error(
-        "Error deleting category:",
-        error.response?.data || error.message
-      );
-      toast.error("Failed to delete category");
     }
   };
 
@@ -243,6 +172,104 @@ export default function Menu() {
     }
   };
 
+  // API: Update menu item
+  const handleUpdateItem = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const restro_name = localStorage.getItem("restroname");
+
+      if (
+        !newItem.name ||
+        !newItem.category ||
+        !newItem.price ||
+        !newItem.quantity ||
+        !newItem.parameter // ✅ Ensure parameter is provided
+      ) {
+        toast.error("All fields are required!");
+        return;
+      }
+
+      if (isNaN(Number(newItem.price))) {
+        toast.error("Price must be a number!");
+        return;
+      }
+
+      if (isNaN(Number(newItem.quantity)) || Number(newItem.quantity) <= 0) {
+        toast.error("Quantity must be a positive number!");
+        return;
+      }
+
+      const categoryObj = categories.find(
+        (cat) => cat.category === newItem.category
+      );
+      if (!categoryObj) {
+        toast.error("Category not found. Please check the category name.");
+        return;
+      }
+
+      let imageId = newItem.image;
+      if (typeof newItem.image !== "string") {
+        // If new image is uploaded
+        imageId = await uploadImage(newItem.image);
+        if (!imageId) {
+          return; // Image upload failed, do not proceed
+        }
+      }
+
+      // Build the payload JSON
+      const payload = {
+        data: {
+          item_name: newItem.name,
+          price: Number(newItem.price),
+          restro_name,
+          quantity: Number(newItem.quantity),
+          category: categoryObj.id,
+          parameter: newItem.parameter, // ✅ Corrected field name
+          image: imageId,
+        },
+      };
+
+      await axios.put(
+        `https://restro-backend-0ozo.onrender.com/api/menus/${newItem.id}`,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      toast.success("Menu item updated successfully!");
+      fetchMenuItems();
+      setIsItemModalOpen(false);
+      setIsEditMode(false);
+      setNewItem({
+        id: "",
+        name: "",
+        category: "",
+        price: "",
+        quantity: "",
+        parameter: "gm",
+        image: null,
+      });
+    } catch (error) {
+      console.error("Error updating menu item:", error.response?.data || error);
+      toast.error("Failed to update menu item. Check console for details.");
+    }
+  };
+
+  // API: Delete menu item
+  const handleDeleteItem = async (documentId) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(
+        `https://restro-backend-0ozo.onrender.com/api/menus/${documentId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Menu item deleted successfully!");
+      fetchMenuItems();
+    } catch (error) {
+      console.error("Error deleting menu item:", error.response?.data || error);
+      toast.error("Failed to delete menu item. Check console for details.");
+    }
+  };
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-100 relative min-w-full">
       <ToastContainer />
@@ -261,48 +288,18 @@ export default function Menu() {
         </button>
       )}
 
-      <aside className="w-full md:w-1/6 mb-2 bg-gray-200 h-full flex flex-col transition-transform duration-300">
-        <h2 className="text-xl p-5 text-right font-semibold text-gray-800">
-          Categories
-        </h2>
-        <div className="flex-1 overflow-y-auto px-3">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              className={`p-3 w-full text-right rounded-r-full transition-all duration-300 transform ${selectedCategory === cat.category
-                ? "text-white mb-1 mt-1 bg-gray-700 scale-110 text-xl font-bold border-solid border-blue-500 border-2"
-                : "text-gray-700 text-l bg-gray-200 scale-80 opacity-90 text-base border-solid border-2"
-                }`}
-              onClick={() => setSelectedCategory(cat.category)}
-            >
-              {cat.category}
-            </button>
-          ))}
-        </div>
-        <div className="p-3 flex flex-col gap-2">
-          <button
-            className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg shadow-md hover:bg-gray-300 hover:text-black transition"
-            onClick={() => setIsCategoryModalOpen(true)}
-          >
-            + Add Category
-          </button>
-          {selectedCategory !== "All" && (
-            <Button
-              variant="destructive"
-              onClick={deleteSelectedCategory}
-              className="w-full"
-            >
-              Delete Selected Category
-            </Button>
-          )}
-        </div>
-      </aside>
+      <Category
+        categories={categories}
+        setSelectedCategory={setSelectedCategory}
+        selectedCategory={selectedCategory}
+        fetchCategories={fetchCategories}
+      />
 
-      <main className="flex-1 p-5 flex flex-wrap gap-5 justify-center items-start overflow-y-auto">
+      <main className="flex-1 p-5 flex-wrap gap-5  items-start overflow-y-auto">
         <h1 className="text-2xl font-bold w-full text-center">
           {selectedCategory} Menu
         </h1>
-        <div className="flex flex-wrap gap-5 justify-center">
+        <div className="flex flex-wrap gap-5 p-5">
           {filteredMenu.map((item) => (
             <div
               key={item.id}
@@ -311,55 +308,48 @@ export default function Menu() {
               <Image
                 src={item.image.url || item.image.formats.thumbnail.url}
                 alt="image"
-                width={150}
-                height={150}
+                width={100}
+                height={100}
                 className="rounded-full mx-auto"
               />
-              <h3 className="text-lg font-semibold mt-3">{item.item_name}</h3>
-              <p className="text-gray-600">{item.category.category}</p>
-              <p className="text-blue-600 font-bold">₹ {item.price} Rs.</p>
+              <h3 className="text-lg font-semibold mt-3">{item.item_name}:-<span className=" text-red-500 font-bold">{item.price}/- Rs.</span></h3>
+              <p className="text-gray-600">{item.category.category} </p>
               <p className="text-gray-700">Quantity: {item.quantity} {item.parameter}</p>
+              <div className="flex justify-center mt-2 space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setNewItem({
+                      id: item.id,
+                      name: item.item_name,
+                      category: item.category.category,
+                      price: item.price,
+                      quantity: item.quantity,
+                      parameter: item.parameter,
+                      image: item.image.id,
+                    });
+                    setIsEditMode(true);
+                    setIsItemModalOpen(true);
+                  }}
+                >
+                  <Pencil className="w-4 h-4" />Edit
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleDeleteItem(item.documentId)}
+                >
+                  <Trash2 className="w-4 h-4" />Delete
+                </Button>
+              </div>
             </div>
           ))}
         </div>
       </main>
 
-      <Dialog open={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Category</DialogTitle>
-            <p className="text-sm text-gray-500">
-              Enter the name for the new category below.
-            </p>
-          </DialogHeader>
-          <Input
-            type="text"
-            placeholder="Enter category name"
-            value={newCategory}
-            onChange={(e) => setNewCategory(e.target.value)}
-            className="mt-2 border p-2 w-full rounded-lg"
-          />
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsCategoryModalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={addCategories}
-              className="bg-blue-600 text-white hover:bg-blue-700"
-            >
-              Add Category
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       <Dialog open={isItemModalOpen} onOpenChange={setIsItemModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add New Item</DialogTitle>
+            <DialogTitle>{isEditMode ? "Edit Item" : "Add New Item"}</DialogTitle>
           </DialogHeader>
           <Input
             type="text"
@@ -424,14 +414,26 @@ export default function Menu() {
             className="mt-2 border p-2 w-full rounded-lg"
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsItemModalOpen(false)}>
+            <Button variant="outline" onClick={() => {
+              setIsItemModalOpen(false);
+              setIsEditMode(false);
+              setNewItem({
+                id: "",
+                name: "",
+                category: "",
+                price: "",
+                quantity: "",
+                parameter: "gm",
+                image: null,
+              });
+            }}>
               Cancel
             </Button>
             <Button
-              onClick={handleAddItem}
+              onClick={isEditMode ? handleUpdateItem : handleAddItem}
               className="bg-green-600 text-white hover:bg-green-700"
             >
-              Add Item
+              {isEditMode ? "Update Item" : "Add Item"}
             </Button>
           </DialogFooter>
         </DialogContent>

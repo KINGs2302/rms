@@ -214,7 +214,7 @@ export default function TableManagement() {
                 </Button>
               </div>
             </div>
-            <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 p-2 ${category.tables.length > 5 ? "overflow-y-auto max-h-60" : ""}`}>
+            <div className={`grid grid-cols-2 md:grid-cols-8 gap-4 p-2 ${category.tables.length > 5 ? "overflow-y-auto max-h-60" : ""}`}>
               {category.tables.map((table) => (
                 <div key={`${category.documentId}-${table}`} className="flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg shadow bg-white">
                   <span className="text-sm font-medium">{table}</span>
