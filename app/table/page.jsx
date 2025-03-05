@@ -1,9 +1,11 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import axios from "axios"; 
+import axios from "axios";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Plus } from "lucide-react"; 
+import { Pencil, Trash2, Plus } from "lucide-react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function TableManagement() {
   const [categorie, setCategorie] = useState([]);
@@ -13,6 +15,7 @@ export default function TableManagement() {
   const [tableCount, setTableCount] = useState(1);
   const [categoryName, setCategoryName] = useState("");
   const [initialTableCount, setInitialTableCount] = useState(1);
+  const [editingCategoryId, setEditingCategoryId] = useState(null); // Track which category is being edited
 
   useEffect(() => {
     fetchcategorie();
@@ -34,6 +37,7 @@ export default function TableManagement() {
           id: item.id,
           name: item.table_category,
           tables: Array.from({ length: item.no_of_table }, (_, i) => i + 1),
+          documentId: item.documentId,
         }));
         setCategorie(formattedcategorie);
       }
@@ -45,11 +49,11 @@ export default function TableManagement() {
   // Add new category with initial tables
   const addCategory = async () => {
     if (!categoryName.trim()) {
-      alert("Category name is required.");
+      toast.error("Category name is required.");
       return;
     }
     if (initialTableCount < 1) {
-      alert("Initial number of tables must be at least 1.");
+      toast.error("Initial number of tables must be at least 1.");
       return;
     }
 
@@ -60,14 +64,15 @@ export default function TableManagement() {
       const response = await axios.post(
         "https://restro-backend-0ozo.onrender.com/api/tables",
         {
-          data:{table_category: categoryName,
+          data: {
+            table_category: categoryName,
             restro_name: restro_name,
-            no_of_table: initialTableCount,}
-          // Store initial table count
+            no_of_table: initialTableCount,
+          },
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      console.log(response);
+
       if (response.data) {
         const newCategory = {
           id: response.data.id,
@@ -80,34 +85,44 @@ export default function TableManagement() {
         setOpenCategoryDialog(false);
         setCategoryName("");
         setInitialTableCount(1);
+        toast.success("Category added successfully!");
       }
     } catch (error) {
       console.error("Error adding category:", error);
+      toast.error(`Error: ${error.response?.data?.message || "Something went wrong"}`);
     }
   };
 
+  // Open dialog for editing category
+  const openEditCategoryDialog = (category) => {
+    setEditingCategoryId(category.documentId);
+    setCategoryName(category.name);
+    setInitialTableCount(category.tables.length);
+    setOpenCategoryDialog(true);
+  };
 
-  const updateCategory = async (updateCategoryId) => {
+  // Update category
+  const updateCategory = async () => {
     if (!categoryName.trim()) {
-      alert("Category name is required.");
+      toast.error("Category name is required.");
       return;
     }
     if (initialTableCount < 1) {
-      alert("Number of tables must be at least 1.");
+      toast.error("Number of tables must be at least 1.");
       return;
     }
 
     try {
       const token = localStorage.getItem("token");
-      const restro_name=localStorage.getItem("restroname");
+      const restro_name = localStorage.getItem("restroname");
+
       await axios.put(
-        `https://restro-backend-0ozo.onrender.com/api/tables/${updateCategoryId}`,
+        `https://restro-backend-0ozo.onrender.com/api/tables/${editingCategoryId}`,
         {
           data: {
             table_category: categoryName,
             no_of_table: initialTableCount,
             restro_name: restro_name,
-
           },
         },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -116,7 +131,7 @@ export default function TableManagement() {
       // Update category in state
       setCategorie((prev) =>
         prev.map((category) =>
-          category.documentId === updateCategoryId
+          category.documentId === editingCategoryId
             ? {
                 ...category,
                 name: categoryName,
@@ -129,27 +144,27 @@ export default function TableManagement() {
       setOpenCategoryDialog(false);
       setCategoryName("");
       setInitialTableCount(1);
+      setEditingCategoryId(null);
+      toast.success("Category updated successfully!");
     } catch (error) {
       console.error("Error updating category:", error);
+      toast.error(`Error: ${error.response?.data?.message || "Something went wrong"}`);
     }
   };
-
-
-
 
   // Delete category
   const deleteCategory = async (documentId) => {
     const token = localStorage.getItem("token");
-    console.log(documentId);
     try {
       await axios.delete(`https://restro-backend-0ozo.onrender.com/api/tables/${documentId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       setCategorie((prev) => prev.filter((category) => category.documentId !== documentId));
-      console.log(`Category ${documentId} deleted successfully`);
+      toast.success("Category deleted successfully!");
     } catch (error) {
       console.error("Error deleting category:", error);
+      toast.error("Error deleting category. Please try again.");
     }
   };
 
@@ -170,10 +185,12 @@ export default function TableManagement() {
     );
     setOpenTableDialog(false);
     setTableCount(1);
+    toast.success("Tables added successfully!");
   };
-        
+
   return (
     <div className="w-full h-screen p-4 overflow-auto">
+      <ToastContainer />
       <h1 className="text-2xl font-semibold mb-4 text-center">Table Management</h1>
 
       {/* Add Category Button */}
@@ -189,7 +206,7 @@ export default function TableManagement() {
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-lg font-semibold">{category.name}</h2>
               <div className="flex gap-2">
-                <Button onClick={() => updateCategory(category.documentId)} variant="outline">
+                <Button onClick={() => openEditCategoryDialog(category)} variant="outline">
                   <Pencil className="w-4 h-4 mr-2" /> Edit
                 </Button>
                 <Button onClick={() => deleteCategory(category.documentId)} variant="destructive">
@@ -197,9 +214,9 @@ export default function TableManagement() {
                 </Button>
               </div>
             </div>
-            <div className={`grid grid-cols-4 gap-4 p-2 ${category.tables.length > 5 ? "overflow-y-auto max-h-60" : ""}`}>
+            <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 p-2 ${category.tables.length > 5 ? "overflow-y-auto max-h-60" : ""}`}>
               {category.tables.map((table) => (
-                <div key={table} className="flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg shadow bg-white">
+                <div key={`${category.documentId}-${table}`} className="flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg shadow bg-white">
                   <span className="text-sm font-medium">{table}</span>
                 </div>
               ))}
@@ -229,11 +246,11 @@ export default function TableManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Add Category Dialog */}
+      {/* Add/Edit Category Dialog */}
       <Dialog open={openCategoryDialog} onOpenChange={setOpenCategoryDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Category</DialogTitle>
+            <DialogTitle>{editingCategoryId ? "Edit Category" : "Add Category"}</DialogTitle>
           </DialogHeader>
           <div className="p-4">
             <label className="block mb-2">Category Name</label>
@@ -243,15 +260,15 @@ export default function TableManagement() {
               value={categoryName}
               onChange={(e) => setCategoryName(e.target.value)}
             />
-            <label className="block mt-4 mb-2">Initial Number of Tables</label>
+            <label className="block mt-4 mb-2">Number of Tables</label>
             <input
               type="number"
               className="w-full p-2 border rounded-md"
               value={initialTableCount}
               onChange={(e) => setInitialTableCount(Math.max(1, parseInt(e.target.value)))}
             />
-            <Button className="mt-4 w-full" onClick={addCategory}>
-              Add Category
+            <Button className="mt-4 w-full" onClick={editingCategoryId ? updateCategory : addCategory}>
+              {editingCategoryId ? "Update Category" : "Add Category"}
             </Button>
           </div>
         </DialogContent>
@@ -259,5 +276,3 @@ export default function TableManagement() {
     </div>
   );
 }
-
-

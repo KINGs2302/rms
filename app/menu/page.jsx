@@ -243,7 +243,6 @@ export default function Menu() {
     }
   };
 
-
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-100 relative min-w-full">
       <ToastContainer />
@@ -262,7 +261,7 @@ export default function Menu() {
         </button>
       )}
 
-      <aside className="w-1/6 mb-2 bg-gray-200 h-full flex flex-col transition-transform duration-300">
+      <aside className="w-full md:w-1/6 mb-2 bg-gray-200 h-full flex flex-col transition-transform duration-300">
         <h2 className="text-xl p-5 text-right font-semibold text-gray-800">
           Categories
         </h2>
@@ -307,7 +306,7 @@ export default function Menu() {
           {filteredMenu.map((item) => (
             <div
               key={item.id}
-              className="bg-white p-4 rounded-2xl shadow-md w-64 text-center"
+              className="bg-white p-4 rounded-2xl shadow-md w-full sm:w-64 text-center"
             >
               <Image
                 src={item.image.url || item.image.formats.thumbnail.url}
@@ -378,7 +377,6 @@ export default function Menu() {
             readOnly
             className="mt-2 border p-2 w-full rounded-lg bg-gray-100 cursor-text"
           />
-
           <Input
             type="number"
             placeholder="Price"
@@ -398,7 +396,6 @@ export default function Menu() {
               }
               className="border p-2 w-full rounded-lg"
             />
-
             <select
               value={newItem.parameter} // Change unit to parameter
               onChange={(e) =>
@@ -413,9 +410,6 @@ export default function Menu() {
               <option value="inch">Inches</option>
               <option value="pcs">Pieces</option>
             </select>
-
-
-
           </div>
           <input
             type="file"
