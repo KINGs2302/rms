@@ -8,7 +8,7 @@ export default function kitchen() {
   return (
     <>
       <div className="md:w-64">
-        <Navbar active={active} setActive={setActive} />
+        {/* <Navbar active={active} setActive={setActive} /> */}
       </div>
       <div>kitchen</div>
     </>
