@@ -20,6 +20,7 @@ export default function Menu() {
   const [isEditMode, setIsEditMode] = useState(false); // new state to track edit mode
   const [newItem, setNewItem] = useState({
     id: "",
+    documentId: "",
     name: "",
     category: "",
     price: "",
@@ -177,70 +178,83 @@ export default function Menu() {
     try {
       const token = localStorage.getItem("token");
       const restro_name = localStorage.getItem("restroname");
-
+  
+      if (!newItem.documentId) {
+        toast.error("Invalid item ID. Cannot update.");
+        return;
+      }
+  
       if (
         !newItem.name ||
         !newItem.category ||
         !newItem.price ||
         !newItem.quantity ||
-        !newItem.parameter // ✅ Ensure parameter is provided
+        !newItem.parameter
       ) {
         toast.error("All fields are required!");
         return;
       }
-
+  
       if (isNaN(Number(newItem.price))) {
         toast.error("Price must be a number!");
         return;
       }
-
+  
       if (isNaN(Number(newItem.quantity)) || Number(newItem.quantity) <= 0) {
         toast.error("Quantity must be a positive number!");
         return;
       }
-
-      const categoryObj = categories.find(
+  
+      // ✅ Find category by documentId instead of id
+      const categoryObj = categories?.find(
         (cat) => cat.category === newItem.category
       );
+  
       if (!categoryObj) {
         toast.error("Category not found. Please check the category name.");
         return;
       }
-
+  
       let imageId = newItem.image;
-      if (typeof newItem.image !== "string") {
-        // If new image is uploaded
+      if (newItem.image instanceof File) {
         imageId = await uploadImage(newItem.image);
         if (!imageId) {
-          return; // Image upload failed, do not proceed
+          toast.error("Image upload failed.");
+          return;
         }
       }
-
-      // Build the payload JSON
+  
+      // ✅ Use `documentId` instead of `id`
       const payload = {
         data: {
+          documentId: newItem.documentId, // ✅ Use documentId instead of id
           item_name: newItem.name,
           price: Number(newItem.price),
           restro_name,
           quantity: Number(newItem.quantity),
-          category: categoryObj.id,
-          parameter: newItem.parameter, // ✅ Corrected field name
-          image: imageId,
+          category: categoryObj.documentId, // ✅ Use category's documentId
+          parameter: newItem.parameter,
+          image: imageId || newItem.image?.documentId, // ✅ Use image's documentId
         },
       };
-
-      await axios.put(
-        `https://restro-backend-0ozo.onrender.com/api/menus/${newItem.id}`,
+  
+      console.log("Payload:", payload);
+  
+      const response = await axios.put(
+        `https://restro-backend-0ozo.onrender.com/api/menus/${newItem.documentId}`, // ✅ Use documentId in URL
         payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+  
+      console.log("Update response:", response.data);
+  
       toast.success("Menu item updated successfully!");
       fetchMenuItems();
       setIsItemModalOpen(false);
       setIsEditMode(false);
       setNewItem({
         id: "",
+        documentId: "",
         name: "",
         category: "",
         price: "",
@@ -250,7 +264,7 @@ export default function Menu() {
       });
     } catch (error) {
       console.error("Error updating menu item:", error.response?.data || error);
-      toast.error("Failed to update menu item. Check console for details.");
+      toast.error(error.response?.data?.message || "Failed to update menu item.");
     }
   };
 
@@ -321,6 +335,7 @@ export default function Menu() {
                   onClick={() => {
                     setNewItem({
                       id: item.id,
+                      documentId: item.documentId,
                       name: item.item_name,
                       category: item.category.category,
                       price: item.price,
@@ -419,6 +434,7 @@ export default function Menu() {
               setIsEditMode(false);
               setNewItem({
                 id: "",
+                documentId: "",
                 name: "",
                 category: "",
                 price: "",
