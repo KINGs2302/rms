@@ -227,10 +227,9 @@ export default function Menu() {
       // ✅ Use `documentId` instead of `id`
       const payload = {
         data: {
-          documentId: newItem.documentId, // ✅ Use documentId instead of id
           item_name: newItem.name,
           price: Number(newItem.price),
-          restro_name,
+          restro_name: restro_name,
           quantity: Number(newItem.quantity),
           category: categoryObj.documentId, // ✅ Use category's documentId
           parameter: newItem.parameter,
