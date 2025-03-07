@@ -316,13 +316,13 @@ export default function Menu() {
           {filteredMenu.map((item) => (
             <div
               key={item.id}
-              className="bg-white p-4 rounded-2xl shadow-md w-full sm:w-64 text-center"
+              className="bg-white p-2 rounded-2xl shadow-md w-full sm:w-52 text-center"
             >
               <Image
                 src={item.image.url || item.image.formats.thumbnail.url}
                 alt="image"
-                width={100}
-                height={100}
+                width={75}
+                height={75}
                 className="rounded-full mx-auto"
               />
               <h3 className="text-lg font-semibold mt-3">{item.item_name}:-<span className=" text-red-500 font-bold">{item.price}/- Rs.</span></h3>
