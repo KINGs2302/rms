@@ -22,14 +22,17 @@ export default function OrderPOS() {
         `https://restro-backend-0ozo.onrender.com/api/tables?filters[restro_name][$eq]=${restro_name}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
+
       if (response.data?.data) {
-        const formattedCategories = response.data.data.map((item) => ({
-          id: item.id,
-          name: item.table_category, // Category Name
-          tables: Array.from({ length: item.no_of_table }, (_, i) => i + 1), // Table Numbers
-          documentId: item.documentId,
-        }));
+        const formattedCategories = response.data.data.map((item) => {
+          let tableNo = 1; // Start table number from 1 for each category
+          return {
+            id: item.id,
+            name: item.table_category, // Category Name
+            tables: Array.from({ length: item.no_of_table }, () => tableNo++), // Assign unique table numbers
+            documentId: item.documentId,
+          };
+        });
         setCategories(formattedCategories);
       }
     } catch (error) {

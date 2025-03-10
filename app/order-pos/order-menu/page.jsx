@@ -1,12 +1,22 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
-function OrderMenu({ table }) {
+function OrderMenu() {
+  const searchParams = useSearchParams();
+  const table = searchParams.get("table"); // Extract table number from URL
   const [menus, setMenus] = useState([]);
   const [categories, setCategories] = useState([{ id: "all", category: "All" }]);
   const [order, setOrder] = useState({});
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [tableNumber, setTableNumber] = useState(table || "Unknown"); // Store table number
+  const [tableNumber, setTableNumber] = useState("Unknown");
+
+  useEffect(() => {
+    console.log("Received table prop:", table);
+    if (table) {
+      setTableNumber(table);
+    }
+  }, [table]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,9 +48,10 @@ function OrderMenu({ table }) {
     fetchData();
   }, []);
 
-  const filteredMenu = selectedCategory === "All"
-    ? menus
-    : menus.filter((item) => item.category.category === selectedCategory);
+  const filteredMenu =
+    selectedCategory === "All"
+      ? menus
+      : menus.filter((item) => item.category.category === selectedCategory);
 
   const handleAddToOrder = (item) => {
     setOrder((prev) => ({
@@ -72,8 +83,8 @@ function OrderMenu({ table }) {
       };
     });
 
-    console.log("Table Number:", tableNumber); // Print table number
-    console.log("Order Details:", orderDetails); // Print order details
+    console.log("Table Number:", tableNumber);
+    console.log("Order Details:", orderDetails);
 
     alert("Order Placed Successfully!");
   };
@@ -119,21 +130,21 @@ function OrderMenu({ table }) {
               </h3>
               <p className="text-gray-600">Category: {item.category?.category}</p>
 
-              {/* Quantity Counter */}
-              <div className="flex items-center justify-center mt-3">
+              {/* Add & Remove Buttons */}
+              <div className="flex justify-center items-center mt-2 space-x-3">
                 <button
+                  className="bg-green-500 text-white px-3 py-1 rounded-lg"
+                  onClick={() => handleAddToOrder(item)}
+                >
+                  ➕
+                </button>
+                <span className="text-lg font-semibold">{order[item.id] || 0}</span>
+                <button
+                  className="bg-red-500 text-white px-3 py-1 rounded-lg"
                   onClick={() => handleRemoveFromOrder(item)}
-                  className="bg-gray-300 px-3 py-1 rounded-l-md text-lg"
                   disabled={!order[item.id]}
                 >
-                  -
-                </button>
-                <span className="px-4 py-1 bg-gray-100">{order[item.id] || 0}</span>
-                <button
-                  onClick={() => handleAddToOrder(item)}
-                  className="bg-green-500 text-white px-3 py-1 rounded-r-md text-lg"
-                >
-                  +
+                  ➖
                 </button>
               </div>
             </div>
@@ -141,29 +152,34 @@ function OrderMenu({ table }) {
         </div>
       </div>
 
-      {/* Order Summary */}
-      {Object.keys(order).length > 0 && (
-        <div className="bg-gray-100 p-5 fixed bottom-0 w-5/6 flex flex-col items-center shadow-md">
-          <h3 className="text-xl font-semibold">Order Summary</h3>
-          <div className="mt-2 w-3/4 max-h-40 overflow-y-auto">
-            {Object.keys(order).map((itemId) => {
-              const item = menus.find((menu) => menu.id == itemId);
-              return (
-                <div key={item.id} className="flex justify-between p-2 border-b">
-                  <span>{item.item_name} x {order[itemId]}</span>
-                  <span className="text-red-500 font-bold">{item.price * order[itemId]} Rs.</span>
-                </div>
-              );
-            })}
-          </div>
+      {/* Order Summary & Place Order Button */}
+      <div className="bg-gray-100 p-5">
+        <h2 className="text-xl font-semibold">Order Summary</h2>
+        <ul>
+          {Object.keys(order).map((itemId) => {
+            const item = menus.find((menu) => menu.id == itemId);
+            return (
+              <li key={itemId} className="flex justify-between text-lg">
+                <span>
+                  {item.item_name} (x{order[itemId]})
+                </span>
+                <span className="font-semibold text-green-600">
+                  {item.price * order[itemId]} Rs.
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+
+        <div className="text-right mt-4">
           <button
+            className="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold"
             onClick={handlePlaceOrder}
-            className="bg-blue-600 text-white px-5 py-2 rounded-lg mt-3"
           >
             Place Order
           </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
