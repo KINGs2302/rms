@@ -1,10 +1,11 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import axios from "axios"; // ✅ Import Axios
 
 function OrderMenu() {
   const searchParams = useSearchParams();
-  const table = searchParams.get("table"); // Extract table number from URL
+  const table = searchParams.get("table");
   const [menus, setMenus] = useState([]);
   const [categories, setCategories] = useState([{ id: "all", category: "All" }]);
   const [order, setOrder] = useState({});
@@ -12,7 +13,6 @@ function OrderMenu() {
   const [tableNumber, setTableNumber] = useState("Unknown");
 
   useEffect(() => {
-    console.log("Received table prop:", table);
     if (table) {
       setTableNumber(table);
     }
@@ -72,33 +72,60 @@ function OrderMenu() {
     });
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
+    const restro_name = localStorage.getItem("restroname");
+    const token = localStorage.getItem("token");
+    const table_category = "AC"; // You can set this dynamically if needed
+
     const orderDetails = Object.keys(order).map((itemId) => {
       const item = menus.find((menu) => menu.id == itemId);
       return {
-        id: item.id,
-        name: item.item_name,
+        item_name: item.item_name,
         quantity: order[itemId],
         price: item.price * order[itemId],
+        item_status: "Placed", // Default status
+        special_request: "", // You can add a special request input if needed
       };
     });
 
-    console.log("Table Number:", tableNumber);
-    console.log("Order Details:", orderDetails);
+    const totalAmount = orderDetails.reduce((total, item) => total + item.price, 0);
 
-    alert("Order Placed Successfully!");
+    const orderPayload = {
+      data: {
+        restro_name,
+        table_category,
+        table_number: tableNumber,
+        order: orderDetails,
+        Total: totalAmount,
+        Bill_Status: "Unpaid",
+      },
+    };
+
+    try {
+      const response = await axios.post(
+        "https://restro-backend-0ozo.onrender.com/api/poses",
+        orderPayload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      console.log("Order Placed Successfully:", response.data);
+      alert("Order Placed Successfully!");
+
+      // Reset order after placing it
+      setOrder({});
+    } catch (error) {
+      console.error("Error placing order:", error);
+      alert("Failed to place order. Please try again.");
+    }
   };
 
   return (
     <div className="flex flex-col h-full w-full">
-      {/* Table Number Display */}
       <div className="bg-gray-300 text-center py-2 text-lg font-semibold">
         Table Number: {tableNumber}
       </div>
 
-      {/* Main Content */}
       <div className="flex-grow flex">
-        {/* Sidebar Categories */}
         <aside className="w-1/6 bg-gray-200 h-full flex flex-col">
           <h2 className="text-xl p-5 text-right font-semibold text-gray-800">Categories</h2>
           <div className="flex-1 overflow-y-auto pr-1">
@@ -118,7 +145,6 @@ function OrderMenu() {
           </div>
         </aside>
 
-        {/* Menu Items */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-5 w-5/6 max-h-20">
           {filteredMenu.map((item) => (
             <div key={item.id} className="bg-white p-4 rounded-2xl shadow-md text-center">
@@ -130,9 +156,8 @@ function OrderMenu() {
               </h3>
               <p className="text-gray-600">Category: {item.category?.category}</p>
 
-              {/* Add & Remove Buttons */}
               <div className="flex justify-center items-center mt-2 space-x-3">
-              <button
+                <button
                   className="bg-red-400 text-white px-3 py-1 rounded-lg"
                   onClick={() => handleRemoveFromOrder(item)}
                   disabled={!order[item.id]}
@@ -146,55 +171,47 @@ function OrderMenu() {
                 >
                   ➕
                 </button>
-               
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Order Summary & Place Order Button */}
-      {/* Order Summary & Place Order Button */}
-<div className="bg-gray-100 p-5">
-  <h2 className="text-xl font-semibold">Order Summary</h2>
-  <ul>
-    {Object.keys(order).map((itemId) => {
-      const item = menus.find((menu) => menu.id == itemId);
-      return (
-        <li key={itemId} className="flex justify-between text-lg">
-          <span>
-            {item.item_name} (x{order[itemId]})
+      <div className="bg-gray-100 p-5">
+        <h2 className="text-xl font-semibold">Order Summary</h2>
+        <ul>
+          {Object.keys(order).map((itemId) => {
+            const item = menus.find((menu) => menu.id == itemId);
+            return (
+              <li key={itemId} className="flex justify-between text-lg">
+                <span>
+                  {item.item_name} (x{order[itemId]})
+                </span>
+                <span className="font-semibold text-green-600">
+                  {item.price * order[itemId]} Rs.
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+
+        <div className="flex justify-between text-xl font-bold mt-4 border-t pt-2">
+          <span>Total:</span>
+          <span className="text-green-600">
+            {Object.keys(order).reduce((total, itemId) => {
+              const item = menus.find((menu) => menu.id == itemId);
+              return total + item.price * order[itemId];
+            }, 0)}{" "}
+            Rs.
           </span>
-          <span className="font-semibold text-green-600">
-            {item.price * order[itemId]} Rs.
-          </span>
-        </li>
-      );
-    })}
-  </ul>
+        </div>
 
-  {/* Calculate Total Price */}
-  <div className="flex justify-between text-xl font-bold mt-4 border-t pt-2">
-    <span>Total:</span>
-    <span className="text-green-600">
-      {Object.keys(order).reduce((total, itemId) => {
-        const item = menus.find((menu) => menu.id == itemId);
-        return total + item.price * order[itemId];
-      }, 0)}{" "}
-      Rs.
-    </span>
-  </div>
-
-  <div className="text-right mt-4">
-    <button
-      className="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold"
-      onClick={handlePlaceOrder}
-    >
-      Place Order
-    </button>
-  </div>
-</div>
-
+        <div className="text-right mt-4">
+          <button className="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold" onClick={handlePlaceOrder}>
+            Place Order
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
