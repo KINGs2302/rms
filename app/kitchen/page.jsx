@@ -19,8 +19,6 @@ function KitchenPage() {
         `https://restro-backend-0ozo.onrender.com/api/poses?filters[restro_name][$eq]=${restro_name}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      console.log("Fetched Orders:", response.data);
       setOrders(response.data?.data || []);
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -32,12 +30,9 @@ function KitchenPage() {
 
   const updateItemStatus = async (documentId, itemIndex, newStatus) => {
     const token = localStorage.getItem("token");
-
-    // Find the order being updated
     const orderToUpdate = orders.find((order) => order.documentId === documentId);
     if (!orderToUpdate) return;
 
-    // Clone and update the item's status
     const updatedOrder = { ...orderToUpdate };
     updatedOrder.order[itemIndex].item_status = newStatus;
 
@@ -56,8 +51,6 @@ function KitchenPage() {
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      // Update UI with new status
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order.documentId === documentId ? updatedOrder : order
@@ -69,52 +62,35 @@ function KitchenPage() {
   };
 
   return (
-    <div className="p-5">
+    <div className="p-5 h-screen w-screen flex flex-col items-center justify-center bg-gray-100">
       <h1 className="text-2xl font-bold mb-4">Kitchen Orders</h1>
-
       {loading ? (
         <p>Loading orders...</p>
       ) : orders.length === 0 ? (
         <p>No orders available</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {orders.map((order) => (
-            <div
-              key={order.documentId}
-              className="bg-white p-4 rounded-lg shadow-md max-h-96 overflow-y-auto"
-            >
-              <h2 className="text-xl font-semibold">
-                Table {order.table_number} ({order.table_category})
-              </h2>
-              <p className="text-gray-600">Bill No: {order.Bill_no}</p>
-              <p className="text-gray-600">Total: ₹{order.Total}</p>
-              <p className="text-gray-600">
-                Bill Status:{" "}
-                <span
-                  className={`font-semibold ${
-                    order.Bill_Status === "Unpaid" ? "text-red-500" : "text-green-500"
-                  }`}
-                >
-                  {order.Bill_Status}
-                </span>
-              </p>
-
-              <ul className="mt-2 space-y-2">
-                {order.order.map((item, index) => (
-                  <li key={index} className="border-b py-2 flex flex-col">
-                    <p className="font-semibold">{item.item_name}</p>
-                    <p className="text-gray-600">
-                      ₹{item.price} x {item.quantity}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Request: {item.special_request || "None"}
-                    </p>
-
-                    {/* Status Dropdown */}
-                    <label className="text-sm font-semibold mt-2">
-                      Status:
+        <div className="overflow-x-auto w-full max-w-full h-full flex justify-center items-center">
+          <table className="min-w-full bg-white border border-gray-300 h-full">
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="border px-4 py-2">Bill No.</th>
+                <th className="border px-4 py-2">Item Name</th>
+                <th className="border px-4 py-2">Quantity</th>
+                <th className="border px-4 py-2">Request</th>
+                <th className="border px-4 py-2">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((order) =>
+                order.order.map((item, index) => (
+                  <tr key={`${order.documentId}-${index}`} className="border-t">
+                    <td className="border px-4 py-2">{order.Bill_no}</td>
+                    <td className="border px-4 py-2">{item.item_name}</td>
+                    <td className="border px-4 py-2">{item.quantity}</td>
+                    <td className="border px-4 py-2">{item.special_request || "None"}</td>
+                    <td className="border px-4 py-2">
                       <select
-                        className="ml-2 p-1 border rounded-md"
+                        className="p-1 border rounded-md"
                         value={item.item_status}
                         onChange={(e) => updateItemStatus(order.documentId, index, e.target.value)}
                       >
@@ -123,12 +99,12 @@ function KitchenPage() {
                         <option value="Prepared">Prepared</option>
                         <option value="Ordered">Ordered</option>
                       </select>
-                    </label>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
