@@ -6,10 +6,12 @@ import { useRouter } from "next/navigation";
 
 export default function OrderPOS() {
   const [categories, setCategories] = useState([]);
+  const [orders, setOrders] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
     fetchCategories();
+    fetchOrders();
   }, []);
 
   // Fetch categories from API
@@ -40,8 +42,32 @@ export default function OrderPOS() {
     }
   };
 
+  // Fetch orders from API
+  const fetchOrders = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const restro_name = localStorage.getItem("restroname");
+
+      const response = await axios.get(
+        `https://restro-backend-0ozo.onrender.com/api/poses?filters[restro_name][$eq]=${restro_name}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data?.data) {
+        setOrders(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+    }
+  };
+
   const handleTableClick = (category, table) => {
     router.push(`/order-pos/order-menu?category=${category.name}&table=${table}`);
+  };
+
+  // Define the handleEditOrder function
+  const handleEditOrder = (order) => {
+    router.push(`/order-pos/order-menu-edit?orderId=${order.documentId}`);
   };
 
   return (
@@ -71,6 +97,38 @@ export default function OrderPOS() {
           </div>
         </div>
       ))}
+
+      {/* Orders Section */}
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold mb-4">Placed Orders</h2>
+        {orders.map((order) => (
+          <div key={order.id} className="mb-6 p-4 border rounded-lg shadow">
+            <h3 className="text-md font-semibold">
+              Table: {order.table_category} - {order.table_number}
+            </h3>
+            <ul className="mt-2">
+              {order.order.map((item, index) => (
+                <li key={index} className="flex justify-between mt-2">
+                  <span>{item.item_name} ({item.quantity})</span>
+                  <span>{item.item_status}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-4 flex justify-between">
+              <span>Total: ${order.Total}</span>
+              <span>Bill Status: {order.Bill_Status}</span>
+            </div>
+            <div className="flex justify-end space-x-4 mt-4">
+              <button
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg"
+                onClick={() => handleEditOrder(order)}
+              >
+                Edit Order
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

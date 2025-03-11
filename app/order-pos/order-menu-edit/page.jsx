@@ -3,20 +3,51 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import axios from "axios"; // ✅ Import Axios
 
-function OrderMenu() {
+function OrderMenuEdit() {
   const searchParams = useSearchParams();
-  const table = searchParams.get("table");
+  const orderId = searchParams.get("orderId");
   const [menus, setMenus] = useState([]);
   const [categories, setCategories] = useState([{ id: "all", category: "All" }]);
   const [order, setOrder] = useState({});
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [tableNumber, setTableNumber] = useState("Unknown");
+  const [existingOrder, setExistingOrder] = useState(null);
 
   useEffect(() => {
-    if (table) {
-      setTableNumber(table);
+    if (orderId) {
+      fetchOrderDetails(orderId);
     }
-  }, [table]);
+  }, [orderId]);
+
+  const fetchOrderDetails = async (orderId) => {
+    const token = localStorage.getItem("token");
+
+    try {
+      const response = await axios.get(
+        `https://restro-backend-0ozo.onrender.com/api/poses/${orderId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data?.data) {
+        const orderData = response.data.data;
+        setExistingOrder(orderData);
+        setOrder(
+          orderData.order.reduce((acc, item) => {
+            acc[item.item_name] = {
+              quantity: item.quantity,
+              item_status: item.item_status,
+              price: item.price,
+              special_request: item.special_request,
+            };
+            return acc;
+          }, {})
+        );
+        setTableNumber(orderData.table_number);
+      }
+    } catch (error) {
+      console.error("Error fetching order details:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -56,39 +87,44 @@ function OrderMenu() {
   const handleAddToOrder = (item) => {
     setOrder((prev) => ({
       ...prev,
-      [item.id]: prev[item.id] ? prev[item.id] + 1 : 1,
+      [item.item_name]: {
+        quantity: prev[item.item_name] ? prev[item.item_name].quantity + 1 : 1,
+        item_status: "Placed",
+        price: item.price,
+        special_request: "",
+      },
     }));
   };
 
   const handleRemoveFromOrder = (item) => {
     setOrder((prev) => {
       const newOrder = { ...prev };
-      if (newOrder[item.id] > 1) {
-        newOrder[item.id] -= 1;
+      if (newOrder[item.item_name] && newOrder[item.item_name].quantity > 1) {
+        newOrder[item.item_name].quantity -= 1;
       } else {
-        delete newOrder[item.id];
+        delete newOrder[item.item_name];
       }
       return newOrder;
     });
   };
 
-  const handlePlaceOrder = async () => {
+  const handleUpdateOrder = async () => {
     const restro_name = localStorage.getItem("restroname");
     const token = localStorage.getItem("token");
     const table_category = "AC"; // You can set this dynamically if needed
 
-    const orderDetails = Object.keys(order).map((itemId) => {
-      const item = menus.find((menu) => menu.id == itemId);
+    const orderDetails = Object.keys(order).map((itemName) => {
+      const item = order[itemName];
       return {
-        item_name: item.item_name,
-        quantity: order[itemId],
-        price: item.price * order[itemId],
-        item_status: "Placed", // Default status
-        special_request: "", // You can add a special request input if needed
+        item_name: itemName,
+        quantity: item.quantity,
+        price: item.price,
+        item_status: item.item_status,
+        special_request: item.special_request,
       };
     });
 
-    const totalAmount = orderDetails.reduce((total, item) => total + item.price, 0);
+    const totalAmount = orderDetails.reduce((total, item) => total + item.price * item.quantity, 0);
 
     const orderPayload = {
       data: {
@@ -102,20 +138,17 @@ function OrderMenu() {
     };
 
     try {
-      const response = await axios.post(
-        "https://restro-backend-0ozo.onrender.com/api/poses",
+      const response = await axios.put(
+        `https://restro-backend-0ozo.onrender.com/api/poses/${orderId}`,
         orderPayload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("Order Placed Successfully:", response.data);
-      alert("Order Placed Successfully!");
-
-      // Reset order after placing it
-      setOrder({});
+      console.log("Order Updated Successfully:", response.data);
+      alert("Order Updated Successfully!");
     } catch (error) {
-      console.error("Error placing order:", error);
-      alert("Failed to place order. Please try again.");
+      console.error("Error updating order:", error);
+      alert("Failed to update order. Please try again.");
     }
   };
 
@@ -160,11 +193,11 @@ function OrderMenu() {
                 <button
                   className="bg-red-400 text-white px-3 py-1 rounded-lg"
                   onClick={() => handleRemoveFromOrder(item)}
-                  disabled={!order[item.id]}
+                  disabled={!order[item.item_name]}
                 >
                   ➖
                 </button>
-                <span className="text-lg font-semibold">{order[item.id] || 0}</span>
+                <span className="text-lg font-semibold">{order[item.item_name]?.quantity || 0}</span>
                 <button
                   className="bg-green-400 text-white px-3 py-1 rounded-lg"
                   onClick={() => handleAddToOrder(item)}
@@ -180,15 +213,15 @@ function OrderMenu() {
       <div className="bg-gray-100 p-5">
         <h2 className="text-xl font-semibold">Order Summary</h2>
         <ul>
-          {Object.keys(order).map((itemId) => {
-            const item = menus.find((menu) => menu.id == itemId);
+          {Object.keys(order).map((itemName) => {
+            const item = order[itemName];
             return (
-              <li key={itemId} className="flex justify-between text-lg">
+              <li key={itemName} className="flex justify-between text-lg">
                 <span>
-                  {item.item_name} (x{order[itemId]})
+                  {itemName} (x{item.quantity})
                 </span>
                 <span className="font-semibold text-green-600">
-                  {item.price * order[itemId]} Rs.
+                  {item.price * item.quantity} Rs.
                 </span>
               </li>
             );
@@ -198,17 +231,17 @@ function OrderMenu() {
         <div className="flex justify-between text-xl font-bold mt-4 border-t pt-2">
           <span>Total:</span>
           <span className="text-green-600">
-            {Object.keys(order).reduce((total, itemId) => {
-              const item = menus.find((menu) => menu.id == itemId);
-              return total + item.price * order[itemId];
+            {Object.keys(order).reduce((total, itemName) => {
+              const item = order[itemName];
+              return total + item.price * item.quantity;
             }, 0)}{" "}
             Rs.
           </span>
         </div>
 
         <div className="text-right mt-4">
-          <button className="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold" onClick={handlePlaceOrder}>
-            Place Order
+          <button className="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold" onClick={handleUpdateOrder}>
+            Update Order
           </button>
         </div>
       </div>
@@ -216,4 +249,4 @@ function OrderMenu() {
   );
 }
 
-export default OrderMenu;
+export default OrderMenuEdit;
