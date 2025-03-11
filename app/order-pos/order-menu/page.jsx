@@ -132,20 +132,21 @@ function OrderMenu() {
 
               {/* Add & Remove Buttons */}
               <div className="flex justify-center items-center mt-2 space-x-3">
-                <button
-                  className="bg-green-500 text-white px-3 py-1 rounded-lg"
-                  onClick={() => handleAddToOrder(item)}
-                >
-                  ➕
-                </button>
-                <span className="text-lg font-semibold">{order[item.id] || 0}</span>
-                <button
-                  className="bg-red-500 text-white px-3 py-1 rounded-lg"
+              <button
+                  className="bg-red-400 text-white px-3 py-1 rounded-lg"
                   onClick={() => handleRemoveFromOrder(item)}
                   disabled={!order[item.id]}
                 >
                   ➖
                 </button>
+                <span className="text-lg font-semibold">{order[item.id] || 0}</span>
+                <button
+                  className="bg-green-400 text-white px-3 py-1 rounded-lg"
+                  onClick={() => handleAddToOrder(item)}
+                >
+                  ➕
+                </button>
+               
               </div>
             </div>
           ))}
@@ -153,33 +154,47 @@ function OrderMenu() {
       </div>
 
       {/* Order Summary & Place Order Button */}
-      <div className="bg-gray-100 p-5">
-        <h2 className="text-xl font-semibold">Order Summary</h2>
-        <ul>
-          {Object.keys(order).map((itemId) => {
-            const item = menus.find((menu) => menu.id == itemId);
-            return (
-              <li key={itemId} className="flex justify-between text-lg">
-                <span>
-                  {item.item_name} (x{order[itemId]})
-                </span>
-                <span className="font-semibold text-green-600">
-                  {item.price * order[itemId]} Rs.
-                </span>
-              </li>
-            );
-          })}
-        </ul>
+      {/* Order Summary & Place Order Button */}
+<div className="bg-gray-100 p-5">
+  <h2 className="text-xl font-semibold">Order Summary</h2>
+  <ul>
+    {Object.keys(order).map((itemId) => {
+      const item = menus.find((menu) => menu.id == itemId);
+      return (
+        <li key={itemId} className="flex justify-between text-lg">
+          <span>
+            {item.item_name} (x{order[itemId]})
+          </span>
+          <span className="font-semibold text-green-600">
+            {item.price * order[itemId]} Rs.
+          </span>
+        </li>
+      );
+    })}
+  </ul>
 
-        <div className="text-right mt-4">
-          <button
-            className="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold"
-            onClick={handlePlaceOrder}
-          >
-            Place Order
-          </button>
-        </div>
-      </div>
+  {/* Calculate Total Price */}
+  <div className="flex justify-between text-xl font-bold mt-4 border-t pt-2">
+    <span>Total:</span>
+    <span className="text-green-600">
+      {Object.keys(order).reduce((total, itemId) => {
+        const item = menus.find((menu) => menu.id == itemId);
+        return total + item.price * order[itemId];
+      }, 0)}{" "}
+      Rs.
+    </span>
+  </div>
+
+  <div className="text-right mt-4">
+    <button
+      className="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold"
+      onClick={handlePlaceOrder}
+    >
+      Place Order
+    </button>
+  </div>
+</div>
+
     </div>
   );
 }
