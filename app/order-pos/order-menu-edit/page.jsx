@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import axios from "axios"; // ✅ Import Axios
 
@@ -153,6 +153,7 @@ function OrderMenuEdit() {
   };
 
   return (
+    <Suspense fallback={<div>Loading...</div>}>
     <div className="flex flex-col h-full w-full">
       <div className="bg-gray-300 text-center py-2 text-lg font-semibold">
         Table Number: {tableNumber}
@@ -246,6 +247,7 @@ function OrderMenuEdit() {
         </div>
       </div>
     </div>
+    </Suspense>
   );
 }
 
