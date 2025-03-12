@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 
@@ -71,6 +71,7 @@ export default function OrderPOS() {
   };
 
   return (
+    <Suspense fallback={<div>Loading...</div>}>
     <div className="w-full h-screen p-4 overflow-auto">
       {categories.map((category) => (
         <div key={category.id} className="mb-6">
@@ -130,5 +131,6 @@ export default function OrderPOS() {
         ))}
       </div>
     </div>
+    </Suspense>
   );
 }
