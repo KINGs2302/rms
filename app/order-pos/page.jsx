@@ -47,19 +47,22 @@ export default function OrderPOS() {
     try {
       const token = localStorage.getItem("token");
       const restro_name = localStorage.getItem("restroname");
-
+  
       const response = await axios.get(
         `https://restro-backend-0ozo.onrender.com/api/poses?filters[restro_name][$eq]=${restro_name}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+  
       if (response.data?.data) {
-        setOrders(response.data.data);
+        // Filter out orders where Bill_Status is "Paid"
+        const unpaidOrders = response.data.data.filter(order => order.Bill_Status !== "Paid");
+        setOrders(unpaidOrders);
       }
     } catch (error) {
       console.error("Error fetching orders:", error);
     }
   };
+  
 
   const handleTableClick = (category, table) => {
     router.push(`/order-pos/order-menu?category=${category.name}&table=${table}`);
