@@ -68,7 +68,7 @@ function Billing() {
     doc.setFontSize(10);
     doc.text("123, Your Restaurant Address, City - 000000", 55, 20);
     doc.text("GSTIN: 24AALUPP0436C1Z7", 75, 25);
-    doc.text("Phone: +91 9876543210", 75, 30);
+    doc.text("Phone: +91 0000000000", 75, 30);
     
     doc.setFontSize(12);
     doc.text(`Bill No: ${order.Bill_no}`, 10, 40);

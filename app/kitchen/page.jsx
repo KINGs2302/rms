@@ -19,6 +19,7 @@ function KitchenPage() {
         `https://restro-backend-0ozo.onrender.com/api/poses?filters[restro_name][$eq]=${restro_name}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      console.log(response);
       setOrders(response.data?.data || []);
     } catch (error) {
       console.error("Error fetching orders:", error);

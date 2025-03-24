@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import axios from "axios"; // ✅ Import Axios
 
@@ -80,52 +80,69 @@ function OrderMenu() {
   const handlePlaceOrder = async () => {
     const restro_name = localStorage.getItem("restroname");
     const token = localStorage.getItem("token");
-    const table_category = "AC"; // You can set this dynamically if needed
-
-    const orderDetails = Object.keys(order).map((itemId) => {
-      const item = menus.find((menu) => menu.id == itemId);
-      return {
-        item_name: item.item_name,
-        quantity: order[itemId],
-        price: item.price * order[itemId],
-        item_status: "Placed", // Default status
-        special_request: "", // You can add a special request input if needed
-      };
-    });
-
-    const totalAmount = orderDetails.reduce(
-      (total, item) => total + item.price,
-      0
-    );
-
-    const orderPayload = {
-      data: {
-        restro_name,
-        table_category,
-        table_number: tableNumber,
-        order: orderDetails,
-        Total: totalAmount,
-        Bill_Status: "Unpaid",
-      },
-    };
-
+  
     try {
+      // Fetch tables data
+      const tableResponse = await axios.get(
+        `https://restro-backend-0ozo.onrender.com/api/tables?filters[restro_name][$eq]=${restro_name}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+  
+      const tables = tableResponse.data?.data || [];
+      
+      // Determine table category dynamically
+      let table_category = "General"; // Default category if not found
+      for (const table of tables) {
+        if (table.no_of_table && parseInt(table.no_of_table) >= parseInt(tableNumber)) {
+          table_category = table.table_category;
+          break;
+        }
+      }
+  
+      const orderDetails = Object.keys(order).map((itemId) => {
+        const item = menus.find((menu) => menu.id == itemId);
+        return {
+          item_name: item.item_name,
+          quantity: order[itemId],
+          price: item.price * order[itemId],
+          item_status: "Placed",
+          special_request: "",
+        };
+      });
+  
+      const totalAmount = orderDetails.reduce(
+        (total, item) => total + item.price,
+        0
+      );
+  
+      const orderPayload = {
+        data: {
+          restro_name,
+          table_category, // Dynamically assigned category
+          table_number: tableNumber,
+          order: orderDetails,
+          Total: totalAmount,
+          Bill_Status: "Unpaid",
+        },
+      };
+  
       const response = await axios.post(
         "https://restro-backend-0ozo.onrender.com/api/poses",
         orderPayload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+  
       console.log("Order Placed Successfully:", response.data);
       alert("Order Placed Successfully!");
-
-      // Reset order after placing it
+      
       setOrder({});
     } catch (error) {
       console.error("Error placing order:", error);
       alert("Failed to place order. Please try again.");
     }
   };
+  
+  
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -246,3 +263,5 @@ function OrderMenu() {
 }
 
 export default OrderMenu;
+
+
