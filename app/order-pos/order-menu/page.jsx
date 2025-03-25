@@ -9,6 +9,7 @@ import axios from "axios"; // ✅ Import Axios
 function OrderMenus() {
   const searchParams = useSearchParams();
   const table = searchParams.get("table");
+  const category = searchParams.get("category");
   const [menus, setMenus] = useState([]);
   const [categories, setCategories] = useState([
     { id: "all", category: "All" },
@@ -95,12 +96,13 @@ function OrderMenus() {
       const tables = tableResponse.data?.data || [];
       
       // Determine table category dynamically
-      let table_category = "General"; // Default category if not found
-      for (const table of tables) {
-        if (table.no_of_table && parseInt(table.no_of_table) >= parseInt(tableNumber)) {
-          table_category = table.table_category;
-          break;
-        }
+      const matchedTable = tables.find(
+        (table) => table.no_of_table.toString() === tableNumber.toString()
+      );
+  
+      let table_category = category; // Default if not found
+      if (matchedTable) {
+        table_category = matchedTable.table_category;
       }
   
       const orderDetails = Object.keys(order).map((itemId) => {

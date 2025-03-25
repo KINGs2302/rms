@@ -1,8 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { createCanvas } from "canvas";
-import { render } from "receiptline";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
