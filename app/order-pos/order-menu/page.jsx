@@ -262,4 +262,10 @@ function OrderMenus() {
   );
 }
 
-export default OrderMenu;
+export default function OrderMenu() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <OrderMenus />
+    </Suspense>
+  );
+};
