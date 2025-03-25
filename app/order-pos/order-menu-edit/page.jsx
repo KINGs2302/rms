@@ -2,6 +2,9 @@
 import React, { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import axios from "axios"; // ✅ Import Axios
+import { useRouter } from "next/navigation";
+
+
 
 function OrderMenuEdits() {
   const searchParams = useSearchParams();
@@ -12,6 +15,7 @@ function OrderMenuEdits() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [tableNumber, setTableNumber] = useState("Unknown");
   const [existingOrder, setExistingOrder] = useState(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (orderId) {
@@ -146,6 +150,7 @@ function OrderMenuEdits() {
 
       console.log("Order Updated Successfully:", response.data);
       alert("Order Updated Successfully!");
+      router.push("/order-pos");
     } catch (error) {
       console.error("Error updating order:", error);
       alert("Failed to update order. Please try again.");

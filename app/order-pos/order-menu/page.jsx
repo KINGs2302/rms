@@ -1,5 +1,8 @@
 "use client";
 import React, { useEffect, useState, Suspense } from "react";
+import { useRouter } from "next/navigation";
+
+
 import { useSearchParams } from "next/navigation";
 import axios from "axios"; // ✅ Import Axios
 
@@ -13,6 +16,7 @@ function OrderMenus() {
   const [order, setOrder] = useState({});
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [tableNumber, setTableNumber] = useState("Unknown");
+  const router = useRouter();
 
   useEffect(() => {
     if (table) {
@@ -134,6 +138,7 @@ function OrderMenus() {
   
       console.log("Order Placed Successfully:", response.data);
       alert("Order Placed Successfully!");
+      router.push("/order-pos");
       
       setOrder({});
     } catch (error) {
