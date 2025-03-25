@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import axios from "axios"; // ✅ Import Axios
 
-function OrderMenu() {
+function OrderMenus() {
   const searchParams = useSearchParams();
   const table = searchParams.get("table");
   const [menus, setMenus] = useState([]);
@@ -245,4 +245,12 @@ function OrderMenu() {
   );
 }
 
-export default OrderMenu;
+
+
+export default function OrderMenu() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <OrderMenus />
+    </Suspense>
+  );
+}
