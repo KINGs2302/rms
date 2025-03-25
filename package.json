@@ -18,6 +18,7 @@
     "@radix-ui/react-toast": "^1.2.6",
     "@shadcn/ui": "^0.0.4",
     "axios": "^1.7.9",
+    "canvas": "^3.1.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "jspdf": "^3.0.0",
@@ -28,6 +29,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-toastify": "^11.0.3",
+    "receiptline": "^1.16.2",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7"
   },

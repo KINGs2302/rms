@@ -1,24 +1,28 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { createCanvas } from "canvas";
+import { render } from "receiptline";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 function Billing() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showHistory, setShowHistory] = useState(false); // Toggle for paid/unpaid orders
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [showHistory]); // Fetch orders when toggle changes
 
   const fetchOrders = async () => {
     const restro_name = localStorage.getItem("restroname");
     const token = localStorage.getItem("token");
+    const billStatus = showHistory ? "Paid" : "Unpaid"; // Toggle between paid/unpaid
 
     try {
       const response = await axios.get(
-        `https://restro-backend-0ozo.onrender.com/api/poses?filters[restro_name][$eq]=${restro_name}&filters[Bill_Status][$ne]=Paid`,
+        `https://restro-backend-0ozo.onrender.com/api/poses?filters[restro_name][$eq]=${restro_name}&filters[Bill_Status][$eq]=${billStatus}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setOrders(response.data?.data || []);
@@ -50,7 +54,9 @@ function Billing() {
     }
   };
 
-  const generateReceipt = (documentId) => {
+
+ 
+   const generateReceipt = (documentId) => {
     const order = orders.find((order) => order.documentId === documentId);
     if (!order) return;
 
@@ -62,7 +68,7 @@ function Billing() {
     doc.setFontSize(10);
     doc.text("123, Your Restaurant Address, City - 000000", 55, 20);
     doc.text("GSTIN: 24AALUPP0436C1Z7", 75, 25);
-    doc.text("Phone: +91 9876543210", 75, 30);
+    doc.text("Phone: +91 0000000000", 75, 30);
     
     doc.setFontSize(12);
     doc.text(`Bill No: ${order.Bill_no}`, 10, 40);
@@ -104,10 +110,18 @@ function Billing() {
   return (
     <div className="p-5 h-screen w-screen flex flex-col items-center bg-gray-100 overflow-auto">
       <h1 className="text-2xl font-bold mb-4">Billing Section</h1>
+
+      <button
+        className="mb-4 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+        onClick={() => setShowHistory(!showHistory)}
+      >
+        {showHistory ? "Show Unpaid Bills" : "Show Paid Bills (History)"}
+      </button>
+
       {loading ? (
         <p>Loading orders...</p>
       ) : orders.length === 0 ? (
-        <p>No unpaid orders available</p>
+        <p>No {showHistory ? "paid" : "unpaid"} orders available</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full p-5">
           {orders.map((order) => (
@@ -132,12 +146,14 @@ function Billing() {
                   </li>
                 ))}
               </ul>
-              <button
-                className="mt-4 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
-                onClick={() => markAsPaid(order.documentId)}
-              >
-                Mark as Paid & Download Receipt
-              </button>
+              {!showHistory && (
+                <button
+                  className="mt-4 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
+                  onClick={() => markAsPaid(order.documentId)}
+                >
+                  Mark as Paid & Download Receipt
+                </button>
+              )}
             </div>
           ))}
         </div>
