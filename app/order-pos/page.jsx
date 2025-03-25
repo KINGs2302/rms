@@ -67,7 +67,9 @@ export default function OrderPOS() {
 
   // Handle table click
   const handleTableClick = (category, table) => {
-    router.push(`/order-pos/order-menu?category=${category.name}&table=${table}`);
+    router.push(
+      `/order-pos/order-menu?category=${category.name}&table=${table}`
+    );
   };
 
   // Handle order edit click
@@ -98,13 +100,21 @@ export default function OrderPOS() {
                 );
 
                 // Determine table color
-                const tableColor = tableOrder ? "bg-yellow-300" : "bg-green-300";
+                const tableColor = tableOrder
+                  ? "bg-yellow-300"
+                  : "bg-green-300";
 
                 return (
                   <div
                     key={`${category.documentId}-${table}`}
                     className={`flex flex-col items-center justify-center w-24 h-24 border-2 rounded-lg shadow cursor-pointer p-2 relative ${tableColor}`}
-                    onClick={() => handleTableClick(category, table)}
+                    onClick={() => {
+                      if (tableOrder) {
+                        handleEditOrder(tableOrder); // If an order exists, open edit page
+                      } else {
+                        handleTableClick(category, table); // Otherwise, open add order page
+                      }
+                    }}
                   >
                     <span className="text-sm font-medium">Table {table}</span>
 
@@ -113,15 +123,6 @@ export default function OrderPOS() {
                       <div className="text-xs mt-2 text-center">
                         <p>Total: ${tableOrder.Total}</p>
                         <p>Bill: {tableOrder.Bill_Status}</p>
-                        <button
-                          className="mt-2"
-                          onClick={(e) => {
-                            e.stopPropagation(); // Prevent triggering table selection
-                            handleEditOrder(tableOrder);
-                          }}
-                        >
-                          <PencilSquareIcon className="w-5 h-5 text-blue-500 hover:text-blue-700" />
-                        </button>
                       </div>
                     )}
                   </div>
