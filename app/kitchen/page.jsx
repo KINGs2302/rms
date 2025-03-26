@@ -5,9 +5,12 @@ import axios from "axios";
 function KitchenPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState("");
 
   useEffect(() => {
     fetchOrders();
+    const role = localStorage.getItem("role"); // Fetch role from localStorage
+    setUserRole(role);
   }, []);
 
   const fetchOrders = async () => {
@@ -19,8 +22,24 @@ function KitchenPage() {
         `https://restro-backend-0ozo.onrender.com/api/poses?filters[restro_name][$eq]=${restro_name}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      console.log(response);
-      setOrders(response.data?.data || []);
+
+      let fetchedOrders = response.data?.data || [];
+
+      fetchedOrders = fetchedOrders.map((order) => ({
+        ...order,
+        order: order.order.map((item) => ({
+          ...item,
+          item_status: item.item_status || "Ordered",
+        })),
+      }));
+
+      const filteredOrders = fetchedOrders.filter(
+        (order) =>
+          order.Bill_Status !== "Paid" &&
+          order.order.some((item) => item.item_status !== "Placed")
+      );
+
+      setOrders(filteredOrders);
     } catch (error) {
       console.error("Error fetching orders:", error);
       setOrders([]);
@@ -52,6 +71,7 @@ function KitchenPage() {
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order.documentId === documentId ? updatedOrder : order
@@ -59,6 +79,20 @@ function KitchenPage() {
       );
     } catch (error) {
       console.error("Error updating item status:", error);
+    }
+  };
+
+  // Define available statuses based on user role
+  const getStatusOptions = () => {
+    switch (userRole) {
+      case "admin":
+        return ["Ordered", "Preparing", "Prepared", "Placed"];
+      case "chef":
+        return ["Ordered", "Preparing", "Prepared"];
+      case "waiter":
+        return ["Prepared", "Placed"];
+      default:
+        return [];
     }
   };
 
@@ -75,6 +109,7 @@ function KitchenPage() {
             <thead>
               <tr className="bg-gray-200">
                 <th className="border px-4 py-2">Bill No.</th>
+                <th className="border px-4 py-2">Table </th>
                 <th className="border px-4 py-2">Item Name</th>
                 <th className="border px-4 py-2">Quantity</th>
                 <th className="border px-4 py-2">Request</th>
@@ -83,26 +118,30 @@ function KitchenPage() {
             </thead>
             <tbody>
               {orders.map((order) =>
-                order.order.map((item, index) => (
-                  <tr key={`${order.documentId}-${index}`} className="border-t">
-                    <td className="border px-4 py-2">{order.Bill_no}</td>
-                    <td className="border px-4 py-2">{item.item_name}</td>
-                    <td className="border px-4 py-2">{item.quantity}</td>
-                    <td className="border px-4 py-2">{item.special_request || "None"}</td>
-                    <td className="border px-4 py-2">
-                      <select
-                        className="p-1 border rounded-md"
-                        value={item.item_status}
-                        onChange={(e) => updateItemStatus(order.documentId, index, e.target.value)}
-                      >
-                        <option value="Placed">Placed</option>
-                        <option value="Preparing">Preparing</option>
-                        <option value="Prepared">Prepared</option>
-                        <option value="Ordered">Ordered</option>
-                      </select>
-                    </td>
-                  </tr>
-                ))
+                order.order
+                  .filter((item) => item.item_status !== "Placed") // Exclude "Placed" items
+                  .map((item, index) => (
+                    <tr key={`${order.documentId}-${index}`} className="border-t">
+                      <td className="border px-4 py-2">{order.Bill_no}</td>
+                      <td className="border px-4 py-2">{order.table_category} - {order.table_number}</td>
+                      <td className="border px-4 py-2">{item.item_name}</td>
+                      <td className="border px-4 py-2">{item.quantity}</td>
+                      <td className="border px-4 py-2">{item.special_request || "None"}</td>
+                      <td className="border px-4 py-2">
+                        <select
+                          className="p-1 border rounded-md"
+                          value={item.item_status}
+                          onChange={(e) => updateItemStatus(order.documentId, index, e.target.value)}
+                        >
+                          {getStatusOptions().map((status) => (
+                            <option key={status} value={status}>
+                              {status}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                    </tr>
+                  ))
               )}
             </tbody>
           </table>

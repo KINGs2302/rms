@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 
 
 import { useSearchParams } from "next/navigation";
-import axios from "axios"; // ✅ Import Axios
+import axios from "axios"; 
 
 function OrderMenus() {
   const searchParams = useSearchParams();
@@ -82,6 +82,8 @@ function OrderMenus() {
     });
   };
 
+
+
   const handlePlaceOrder = async () => {
     const restro_name = localStorage.getItem("restroname");
     const token = localStorage.getItem("token");
@@ -111,7 +113,7 @@ function OrderMenus() {
           item_name: item.item_name,
           quantity: order[itemId],
           price: item.price * order[itemId],
-          item_status: "Placed",
+          item_status: "Ordered",
           special_request: "",
         };
       });
@@ -256,6 +258,7 @@ function OrderMenus() {
           </div>
 
           <div className="text-right mt-4">
+         
             <button
               className="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold"
               onClick={handlePlaceOrder}
@@ -276,3 +279,7 @@ export default function OrderMenu() {
     </Suspense>
   );
 };
+
+
+
+

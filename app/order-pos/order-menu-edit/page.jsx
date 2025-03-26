@@ -3,11 +3,11 @@ import React, { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import axios from "axios"; // ✅ Import Axios
 import { useRouter } from "next/navigation";
-
+import { jsPDF } from "jspdf";
 function OrderMenuEdits() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
-  
+
   const [menus, setMenus] = useState([]);
   const [categories, setCategories] = useState([{ id: "all", category: "All" }]);
   const [order, setOrder] = useState({});
@@ -94,13 +94,97 @@ function OrderMenuEdits() {
       ...prev,
       [item.item_name]: {
         quantity: prev[item.item_name] ? prev[item.item_name].quantity + 1 : 1,
-        item_status: "Placed",
+        item_status: "Ordered",
         price: item.price,
         special_request: "",
       },
     }));
   };
 
+
+  const handlePayBill = async () => {
+    const restro_name = localStorage.getItem("restroname");
+    const token = localStorage.getItem("token");
+  
+    try {
+      const tableResponse = await axios.get(
+        `https://restro-backend-0ozo.onrender.com/api/tables?filters[restro_name][$eq]=${restro_name}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+  
+      const tables = tableResponse.data?.data || [];
+      const matchedTable = tables.find(
+        (table) => table.no_of_table.toString() === tableNumber.toString()
+      );
+  
+      const table_category = matchedTable ? matchedTable.table_category : tableCategory;
+  
+      const orderDetails = Object.keys(order).map((itemId) => {
+        const item = menus.find((menu) => menu.item_name === itemId); // Use item_name instead of ID
+        if (!item) {
+          console.error(`Menu item not found for: ${itemId}`);
+          return null; // Skip items that are not found
+        }
+        return {
+          item_name: item.item_name,
+          quantity: order[itemId].quantity,
+          price: item.price * order[itemId].quantity,
+          item_status: "Paid",
+          special_request: order[itemId].special_request || "",
+        };
+      }).filter(Boolean); // Remove null values
+  
+      if (orderDetails.length === 0) {
+        alert("No valid items in order.");
+        return;
+      }
+  
+      const totalAmount = orderDetails.reduce((total, item) => total + item.price, 0);
+  
+      const updatedOrderPayload = {
+        data: {
+          restro_name,
+          table_category,
+          table_number: tableNumber,
+          order: orderDetails,
+          Total: totalAmount,
+          Bill_Status: "Paid",
+        },
+      };
+  
+      // Update the Bill Status in the database
+      const response = await axios.put(
+        `https://restro-backend-0ozo.onrender.com/api/poses/${orderId}`,
+        updatedOrderPayload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+  
+      console.log("Bill Paid Successfully:", response.data);
+  
+      // Generate PDF
+      const doc = new jsPDF();
+      doc.text(`Bill for Table Number: ${tableNumber}`, 10, 10);
+      doc.text(`Restaurant: ${restro_name}`, 10, 20);
+      doc.text(`Total Amount: ${totalAmount} Rs`, 10, 30);
+      doc.text("Order Details:", 10, 40);
+  
+      let yPosition = 50;
+      orderDetails.forEach((item) => {
+        doc.text(`${item.item_name} x${item.quantity} - ${item.price} Rs`, 10, yPosition);
+        yPosition += 10;
+      });
+  
+      doc.save(`Table-${tableNumber}-Bill.pdf`);
+      alert("Bill Paid Successfully and PDF Downloaded!");
+  
+      setOrder({});
+      router.push("/order-pos");
+    } catch (error) {
+      console.error("Error paying the bill:", error);
+      alert("Failed to pay bill. Please try again.");
+    }
+  };
+  
   const handleRemoveFromOrder = (item) => {
     setOrder((prev) => {
       const newOrder = { ...prev };
@@ -171,11 +255,10 @@ function OrderMenuEdits() {
               {categories.map((cat) => (
                 <button
                   key={cat.id}
-                  className={`p-3 w-full text-right rounded-r-full transition-all duration-300 ${
-                    selectedCategory === cat.category
+                  className={`p-3 w-full text-right rounded-r-full transition-all duration-300 ${selectedCategory === cat.category
                       ? "bg-gray-700 text-white text-xl font-bold border-blue-500 border-2"
                       : "bg-gray-200 text-gray-700"
-                  }`}
+                    }`}
                   onClick={() => setSelectedCategory(cat.category)}
                 >
                   {cat.category}
@@ -246,6 +329,12 @@ function OrderMenuEdits() {
           </div>
 
           <div className="text-right mt-4">
+            <button
+              className="bg-green-500 text-white px-6 py-2 rounded-lg font-semibold"
+              onClick={handlePayBill}
+            >
+              Pay the Bill
+            </button>
             <button className="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold" onClick={handleUpdateOrder}>
               Update Order
             </button>

@@ -32,6 +32,8 @@ function Billing() {
     }
   };
 
+
+  
   const markAsPaid = async (documentId) => {
     const token = localStorage.getItem("token");
 

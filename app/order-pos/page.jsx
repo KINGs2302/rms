@@ -54,6 +54,7 @@ export default function OrderPOS() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      console.log(response);
       if (response.data?.data) {
         const unpaidOrders = response.data.data.filter(
           (order) => order.Bill_Status !== "Paid"
@@ -95,6 +96,7 @@ export default function OrderPOS() {
                 // Find if an order exists for this table
                 const tableOrder = orders.find(
                   (order) =>
+                   
                     order.table_category === category.name &&
                     Number(order.table_number) === Number(table)
                 );
@@ -121,7 +123,7 @@ export default function OrderPOS() {
                     {/* Display order details if available */}
                     {tableOrder && (
                       <div className="text-xs mt-2 text-center">
-                        <p>Total: ${tableOrder.Total}</p>
+                        <p>Total: ₹{tableOrder.Total}</p>
                         <p>Bill: {tableOrder.Bill_Status}</p>
                       </div>
                     )}
