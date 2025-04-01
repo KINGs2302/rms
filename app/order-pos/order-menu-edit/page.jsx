@@ -3,11 +3,15 @@ import React, { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import axios from "axios"; // ✅ Import Axios
 import { useRouter } from "next/navigation";
-
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { ToastContainer } from "react-toastify";
 function OrderMenuEdits() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
-  
+
   const [menus, setMenus] = useState([]);
   const [categories, setCategories] = useState([{ id: "all", category: "All" }]);
   const [order, setOrder] = useState({});
@@ -50,7 +54,8 @@ function OrderMenuEdits() {
         setTableCategory(orderData.table_category); // ✅ Set tableCategory from API response
       }
     } catch (error) {
-      console.error("Error fetching order details:", error);
+      console.error("Error fetching order:", error);
+      toast.error("Failed to fetch order details.");
     }
   };
 
@@ -94,11 +99,153 @@ function OrderMenuEdits() {
       ...prev,
       [item.item_name]: {
         quantity: prev[item.item_name] ? prev[item.item_name].quantity + 1 : 1,
-        item_status: "Placed",
+        item_status: "Ordered",
         price: item.price,
         special_request: "",
       },
     }));
+  };
+
+
+  const handlePayBill = async () => {
+    const restro_name = localStorage.getItem("restroname");
+    const token = localStorage.getItem("token");
+
+    try {
+      const tableResponse = await axios.get(
+        `https://restro-backend-0ozo.onrender.com/api/tables?filters[restro_name][$eq]=${restro_name}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const tables = tableResponse.data?.data || [];
+      const matchedTable = tables.find(
+        (table) => table.no_of_table.toString() === tableNumber.toString()
+      );
+
+      const table_category = matchedTable ? matchedTable.table_category : tableCategory;
+
+      const orderDetails = Object.keys(order).map((itemId) => {
+        const item = menus.find((menu) => menu.item_name === itemId);
+        if (!item) {
+          console.error(`Menu item not found for: ${itemId}`);
+          return null;
+        }
+        return {
+          item_name: item.item_name,
+          quantity: order[itemId].quantity,
+          price: item.price * order[itemId].quantity,
+          item_status: "Paid",
+          special_request: order[itemId].special_request || "",
+        };
+      }).filter(Boolean); // Remove null values
+      // Remove null values
+
+      if (orderDetails.length === 0) {
+        alert("No valid items in order.");
+        return;
+      }
+
+      const totalAmount = orderDetails.reduce((total, item) => total + item.price, 0);
+
+      const updatedOrderPayload = {
+        data: {
+          restro_name,
+          table_category,
+          table_number: tableNumber,
+          order: orderDetails,
+          Total: totalAmount,
+          Bill_Status: "Paid",
+        },
+      };
+
+      // Update the Bill Status in the database
+      const response = await axios.put(
+        `https://restro-backend-0ozo.onrender.com/api/poses/${orderId}`,
+        updatedOrderPayload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      console.log("Bill Paid Successfully:", response.data);
+
+      // Generate PDF
+      const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    const contentWidth = pageWidth - 2 * margin;
+
+    // Header - Styled with a background
+    doc.setFillColor(240, 248, 255); // Light blue background
+    doc.rect(0, 0, pageWidth, 60, "F");
+
+    // Restaurant Name
+    doc.setFontSize(24);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(0, 0, 0); // Black text
+    doc.text(restro_name, contentWidth / 2 + margin, 30, { align: "center" });
+
+    // Address and Contact
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text("101- abc park, xyz road,", contentWidth / 2 + margin, 45, { align: "center" });
+    doc.text("pqr city, gujarat-123456", contentWidth / 2 + margin, 52, { align: "center" });
+    doc.text("(Mob): 0000000000", contentWidth / 2 + margin, 59, { align: "center" });
+
+    // Bill Details
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0); // Reset text color
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, margin, 75);
+    doc.text(`Table: ${tableNumber}`, contentWidth - 80 + margin, 75);
+    doc.text("Cashier: System", margin, 82);
+    doc.text(`Bill-No. : ${response.data.data.Bill_no}`, contentWidth - 80 + margin, 82);
+
+    // Table Headers
+    autoTable(doc, {
+      startY: 90,
+      head: [["Item", "Qty", "Price", "Amount"]],
+      body: Object.keys(order).map((itemName) => [
+        itemName,
+        order[itemName].quantity,
+        `₹${order[itemName].price.toFixed(2)}`,
+        `₹${(order[itemName].price * order[itemName].quantity).toFixed(2)}`,
+      ]),
+      theme: "grid",
+      styles: { font: "helvetica", fontSize: 12, cellPadding: 8, textColor: [0, 0, 0] },
+      headStyles: { fillColor: [52, 152, 219], textColor: [255, 255, 255], fontStyle: "bold" },
+      alternateRowStyles: { fillColor: [248, 248, 248] },
+    });
+
+    let finalY = doc.lastAutoTable.finalY + 15;
+
+    // Total Calculation
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Sub Total: ₹${totalAmount.toFixed(2)}`, contentWidth - 120 + margin, finalY);
+    doc.setFont("helvetica", "normal");
+    doc.text(`SGST: ₹${(totalAmount * 0.025).toFixed(2)} (2.5%)`, contentWidth - 120 + margin, finalY + 8);
+    doc.text(`CGST: ₹${(totalAmount * 0.025).toFixed(2)} (2.5%)`, contentWidth - 120 + margin, finalY + 16);
+    
+
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Grand Total: ₹${(totalAmount + totalAmount * 0.05 ).toFixed(2)}`, contentWidth - 120 + margin, finalY + 35);
+
+    // Footer
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 100, 100); // Gray text
+    doc.text("Thanks for Visiting!", contentWidth / 2 + margin, finalY + 50, { align: "center" });
+
+    doc.save(`Table-${tableNumber}-Bill.pdf`);
+
+    
+
+
+      setOrder({});
+      router.push("/order-pos");
+    } catch (error) {
+      console.error("Error paying the bill:", error);
+      toast.error("Failed to pay bill. Please try again.");
+    }
   };
 
   const handleRemoveFromOrder = (item) => {
@@ -149,17 +296,19 @@ function OrderMenuEdits() {
       );
 
       console.log("Order Updated Successfully:", response.data);
-      alert("Order Updated Successfully!");
+      toast.success("Order Updated Successfully!");
       router.push("/order-pos");
     } catch (error) {
       console.error("Error updating order:", error);
-      alert("Failed to update order. Please try again.");
+      toast.error("Failed to update order. Please try again.");
+
     }
   };
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <div className="flex flex-col h-full w-full">
+      <ToastContainer />
         <div className="bg-gray-300 text-center py-2 text-lg font-semibold">
           Table Number: {tableNumber} | Table Category: {tableCategory} {/* ✅ Display tableCategory */}
         </div>
@@ -171,11 +320,10 @@ function OrderMenuEdits() {
               {categories.map((cat) => (
                 <button
                   key={cat.id}
-                  className={`p-3 w-full text-right rounded-r-full transition-all duration-300 ${
-                    selectedCategory === cat.category
-                      ? "bg-gray-700 text-white text-xl font-bold border-blue-500 border-2"
-                      : "bg-gray-200 text-gray-700"
-                  }`}
+                  className={`p-3 w-full text-right rounded-r-full transition-all duration-300 ${selectedCategory === cat.category
+                    ? "bg-gray-700 text-white text-xl font-bold border-blue-500 border-2"
+                    : "bg-gray-200 text-gray-700"
+                    }`}
                   onClick={() => setSelectedCategory(cat.category)}
                 >
                   {cat.category}
@@ -246,6 +394,12 @@ function OrderMenuEdits() {
           </div>
 
           <div className="text-right mt-4">
+            <button
+              className="bg-green-500 text-white px-6 py-2 rounded-lg font-semibold"
+              onClick={handlePayBill}
+            >
+              Pay the Bill
+            </button>
             <button className="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold" onClick={handleUpdateOrder}>
               Update Order
             </button>
