@@ -3,6 +3,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { FaReceipt, FaHistory, FaSpinner } from "react-icons/fa";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function Billing() {
   const [orders, setOrders] = useState([]);
@@ -52,9 +54,7 @@ function Billing() {
     }
   };
 
-
- 
-   const generateReceipt = (documentId) => {
+  const generateReceipt = (documentId) => {
     const order = orders.find((order) => order.documentId === documentId);
     if (!order) return;
 
@@ -106,25 +106,37 @@ function Billing() {
   };
 
   return (
-    <div className="p-5 h-screen w-screen flex flex-col items-center bg-gray-100 overflow-auto">
-      <h1 className="text-2xl font-bold mb-4">Billing Section</h1>
+    <div className="p-5 h-full w-full flex flex-col items-center bg-gray-100 overflow-auto">
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">Billing Section</h1>
 
       <button
-        className="mb-4 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+        className="mb-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center"
         onClick={() => setShowHistory(!showHistory)}
       >
-        {showHistory ? "Show Unpaid Bills" : "Show Paid Bills (History)"}
+        {showHistory ? (
+          <>
+            <FaHistory className="mr-2" /> Show Unpaid Bills
+          </>
+        ) : (
+          <>
+            <FaHistory className="mr-2" /> Show Paid Bills (History)
+          </>
+        )}
       </button>
 
       {loading ? (
-        <p>Loading orders...</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full p-5">
+          {[...Array(6)].map((_, i) => (
+            <Skeleton key={i} className="w-full h-40 rounded-lg" />
+          ))}
+        </div>
       ) : orders.length === 0 ? (
-        <p>No {showHistory ? "paid" : "unpaid"} orders available</p>
+        <p className="text-lg text-gray-600">No {showHistory ? "paid" : "unpaid"} orders available</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full p-5">
           {orders.map((order) => (
             <div key={order.documentId} className="bg-white p-4 rounded-lg shadow-md max-h-96 overflow-y-auto">
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-xl font-semibold text-gray-800">
                 Table {order.table_number} ({order.table_category})
               </h2>
               <p className="text-gray-600">Bill No: {order.Bill_no}</p>
@@ -146,10 +158,10 @@ function Billing() {
               </ul>
               {!showHistory && (
                 <button
-                  className="mt-4 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
+                  className="mt-4 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 flex items-center"
                   onClick={() => markAsPaid(order.documentId)}
                 >
-                  Mark as Paid & Download Receipt
+                  <FaReceipt className="mr-2" /> Mark as Paid & Download Receipt
                 </button>
               )}
             </div>
