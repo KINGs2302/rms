@@ -116,7 +116,7 @@ export default function OrderPOS() {
                       }
                     }}
                   >
-                    <span className="text-sm font-medium">Table {table}</span>
+                    <span className="text-sm marker: font-medium">Table {table}</span>
 
                     {/* Display order details if available */}
                     {tableOrder && (

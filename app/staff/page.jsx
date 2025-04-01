@@ -2,13 +2,35 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
-import Navbar from "../dashboard/navbar/page";
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Skeleton } from "@/components/ui/skeleton"; // Import the Skeleton component
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer, toast } from "react-toastify";
 
 export default function EmployeeRegister() {
   const [active, setActive] = useState("Staff");
   const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(true); // State for loading
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -44,6 +66,8 @@ export default function EmployeeRegister() {
       setEmployees(response.data);
     } catch (error) {
       console.error("Error fetching employees:", error);
+    } finally {
+      setLoading(false); // Set loading to false after fetching data
     }
   };
 
@@ -154,156 +178,105 @@ export default function EmployeeRegister() {
   const groupedEmployees = groupEmployeesByRole(employees);
 
   return (
-    <div className="flex flex-col pl-0 md:flex-row min-h-screen bg-gray-100 min-w-full">
+    <div className="flex flex-col md:flex-row min-h-screen bg-gray-100 w-full">
       <ToastContainer />
-      {/* Left sidebar (Navigation) */}
   
-      {/* Main content area */}
-      <main className=" relative flex-1 p-5 pl-0 mt-16 md:mt-0 md:ml-64 flex flex-col md:flex-row gap-5 z-50 md:z-auto ">
-        {/* Employee Registration Form (Sticky on the left side) */}
-        <div className="bg-white p-6  rounded-md shadow-md w-full md:w-1/3 h-fit sticky top-5 z-50">
-          <h2 className="text-2xl font-semibold mb-4">Register Employee</h2>
-          <form onSubmit={handleSubmit}>
-            <input
-              type="text"
-              name="username"
-              placeholder="Username"
-              value={formData.username}
-              onChange={handleChange}
-              required
-              className="w-full p-2 border rounded-md mb-3"
-            />
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="w-full p-2 border rounded-md mb-3"
-            />
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="w-full p-2 border rounded-md mb-3"
-            />
-            <select
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              required
-              className="w-full p-2 border rounded-md mb-3"
-            >
-              <option value="3">Chef</option>
-              <option value="4">Waiter</option>
-            </select>
-            <button type="submit" className="w-full p-2 bg-blue-500 text-white rounded-md">
-              Register
-            </button>
-          </form>
-        </div>
-  
-        {/* Right side: Admin, Chef, Waiter sections */}
-        <div className="flex-1 overflow-y-auto max-h-[100vh] space-y-6 pr-2">
-          {/* Admin Section */}
-          <SectionHeader title="Admin" />
-          <EmployeeTable
-            employees={groupedEmployees["Admin"] || []}
-            openUpdateDialog={openUpdateDialog}
-            deleteemployee={deleteemployee}
-            role="Admin"
-          />
-  
-          {/* Chef Section */}
-          <SectionHeader title="Chef" />
-          <EmployeeTable
-            employees={groupedEmployees["Chef"] || []}
-            openUpdateDialog={openUpdateDialog}
-            deleteemployee={deleteemployee}
-            role="Chef"
-          />
-  
-          {/* Waiter Section */}
-          <SectionHeader title="Waiter" />
-          <EmployeeTable
-            employees={groupedEmployees["Waiter"] || []}
-            openUpdateDialog={openUpdateDialog}
-            deleteemployee={deleteemployee}
-            role="Waiter"
-          />
-        </div>
-      </main>
-  
-      {/* Update Dialog */}
-      {showUpdateDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-md p-6 w-96">
-            <h2 className="text-xl font-bold mb-4">Update Employee</h2>
-            {selectedEmployee && (
-              <div className="space-y-3">
+      <main className="relative flex-1 p-4 md:p-5 mt-16 md:mt-0 flex flex-col md:flex-row gap-6 z-50 w-full">
+        {/* Employee Registration Form */}
+        <Card className="bg-white rounded-md shadow-md w-full md:w-1/3 lg:w-1/4 h-fit sticky top-5 z-50">
+          <CardHeader>
+            <CardTitle className=" text-2xl">Register Employee</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium">Username</label>
-                  <input
+                  <Label htmlFor="username">Username</Label>
+                  <Input
+                    id="username"
                     type="text"
                     name="username"
-                    value={updateData.username}
-                    onChange={handleUpdateChange}
-                    className="w-full p-2 border rounded-md"
+                    placeholder="Username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    required
+                    className="w-full p-3 border rounded-md mb-3"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium">Email</label>
-                  <input
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
                     type="email"
                     name="email"
-                    value={updateData.email}
-                    onChange={handleUpdateChange}
-                    className="w-full p-2 border rounded-md"
+                    placeholder="Email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    className="w-full p-3 border rounded-md mb-3"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium">
-                    Password <span className="text-xs text-gray-500">(Leave blank to keep current)</span>
-                  </label>
-                  <input
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
                     type="password"
                     name="password"
-                    value={updateData.password}
-                    onChange={handleUpdateChange}
-                    className="w-full p-2 border rounded-md"
+                    placeholder="Password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    className="w-full p-3 border rounded-md mb-3"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium">Status</label>
+                  <Label htmlFor="role">Role</Label>
                   <select
-                    name="status"
-                    value={updateData.status}
-                    onChange={handleUpdateChange}
-                    className="w-full p-2 border rounded-md"
+                    id="role"
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    required
+                    className="w-full p-3 border rounded-md mb-3"
                   >
-                    <option value="Active">Active</option>
-                    <option value="Deactive">Deactive</option>
+                    <option value="3">Chef</option>
+                    <option value="4">Waiter</option>
                   </select>
                 </div>
-              </div>
+
+                <Button type="submit" className="w-full py-3 bg-gray-900 text-white rounded-md hover:bg-gray-700">
+                  Register
+                </Button>
+              </form>
             )}
-            <div className="flex justify-end gap-2 mt-4">
-              <button onClick={() => setShowUpdateDialog(false)} className="px-4 py-2 bg-gray-300 rounded-md">
-                Cancel
-              </button>
-              <button onClick={updateEmployee} className="px-4 py-2 bg-blue-500 text-white rounded-md">
-                Update
-              </button>
+          </CardContent>
+        </Card>
+  
+        {/* Employee Sections */}
+        <div className="flex-1 overflow-y-auto max-h-[100vh] space-y-6 pr-4">
+          {['Admin', 'Chef', 'Waiter'].map(role => (
+            <div key={role}>
+              <SectionHeader title={role} />
+              <Card className="p-4 bg-white rounded-md shadow-md">
+                {loading ? <SkeletonTable /> : <EmployeeTable employees={groupedEmployees[role] || []} role={role} />}
+              </Card>
             </div>
-          </div>
+          ))}
         </div>
-      )}
+      </main>
     </div>
   );
+  
 }
 
 /** --- Helper Components & Functions --- **/
@@ -363,6 +336,45 @@ function EmployeeTable({ employees, openUpdateDialog, deleteemployee, role }) {
               </td>
             </tr>
           )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// Renders a skeleton table for loading state.
+function SkeletonTable() {
+  return (
+    <div className="bg-white rounded-md shadow-md overflow-x-auto">
+      <table className="w-full border-collapse border border-gray-300">
+        <thead>
+          <tr className="bg-gray-200">
+            <th className="border p-2">Username</th>
+            <th className="border p-2">Email</th>
+            <th className="border p-2">Status</th>
+            <th className="border p-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {[...Array(3)].map((_, i) => (
+            <tr key={i} className="text-center">
+              <td className="border p-2">
+                <Skeleton className="h-6 w-24 mx-auto" />
+              </td>
+              <td className="border p-2">
+                <Skeleton className="h-6 w-32 mx-auto" />
+              </td>
+              <td className="border p-2">
+                <Skeleton className="h-6 w-24 mx-auto" />
+              </td>
+              <td className="border p-2">
+                <div className="flex justify-center gap-3">
+                  <Skeleton className="h-6 w-6" />
+                  <Skeleton className="h-6 w-6" />
+                </div>
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

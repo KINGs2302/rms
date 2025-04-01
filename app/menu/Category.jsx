@@ -1,17 +1,22 @@
+"use client";
+
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton component
 
 export default function Category({ categories, setSelectedCategory, selectedCategory, fetchCategories }) {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [newCategory, setNewCategory] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // API: add new category
   const addCategories = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem("token");
       const restro_name = localStorage.getItem("restroname");
 
@@ -42,6 +47,8 @@ export default function Category({ categories, setSelectedCategory, selectedCate
         error.response?.data || error.message
       );
       toast.error("Failed to add category");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -55,6 +62,7 @@ export default function Category({ categories, setSelectedCategory, selectedCate
       return;
     }
     try {
+      setLoading(true);
       const token = localStorage.getItem("token");
       if (!token) {
         toast.error("Authentication token missing. Please log in.");
@@ -73,6 +81,8 @@ export default function Category({ categories, setSelectedCategory, selectedCate
         error.response?.data || error.message
       );
       toast.error("Failed to delete category");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -82,22 +92,26 @@ export default function Category({ categories, setSelectedCategory, selectedCate
         Categories
       </h2>
       <div className="flex-1 overflow-y-auto px-3">
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            className={`p-3 w-full text-right rounded-r-full transition-all duration-300 transform ${selectedCategory === cat.category
-              ? "text-white mb-1 mt-1 bg-gray-700 scale-110 text-xl font-bold border-solid border-blue-500 border-2"
-              : "text-gray-700 text-l bg-gray-200 scale-80 opacity-90 text-base border-solid border-2"
-              }`}
-            onClick={() => setSelectedCategory(cat.category)}
-          >
-            {cat.category}
-          </button>
-        ))}
+        {loading ? (
+          <Skeleton className="h-12 mb-2 rounded-lg" />
+        ) : (
+          categories.map((cat) => (
+            <button
+              key={cat.id}
+              className={`p-3 w-full text-right rounded-r-full transition-all duration-300 transform ${selectedCategory === cat.category
+                ? "text-white mb-1 mt-1 bg-gray-700 scale-110 text-xl font-bold border-solid border-blue-500 border-2"
+                : "text-gray-700 text-l bg-gray-200 scale-80 opacity-90 text-base border-solid border-2"
+                }`}
+              onClick={() => setSelectedCategory(cat.category)}
+            >
+              {cat.category}
+            </button>
+          ))
+        )}
       </div>
       <div className="p-3 flex flex-col gap-2">
         <button
-          className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg shadow-md hover:bg-gray-300 hover:text-black transition"
+          className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg shadow-md hover:bg-gray-500 transition"
           onClick={() => setIsCategoryModalOpen(true)}
         >
           + Add Category
@@ -137,7 +151,7 @@ export default function Category({ categories, setSelectedCategory, selectedCate
             </Button>
             <Button
               onClick={addCategories}
-              className="bg-blue-600 text-white hover:bg-blue-700"
+              className="bg-gray-600 text-white hover:bg-gray-700"
             >
               Add Category
             </Button>

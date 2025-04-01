@@ -4,11 +4,14 @@ import axios from "axios";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, Plus } from "lucide-react";
+import { MdOutlineTableRestaurant } from "react-icons/md";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Skeleton } from "@/components/ui/skeleton"; // Import the Skeleton component
 
 export default function TableManagement() {
   const [categorie, setCategorie] = useState([]);
+  const [loading, setLoading] = useState(true); // State for loading
   const [openTableDialog, setOpenTableDialog] = useState(false);
   const [openCategoryDialog, setOpenCategoryDialog] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -43,6 +46,8 @@ export default function TableManagement() {
       }
     } catch (error) {
       console.error("Error fetching table categorie:", error);
+    } finally {
+      setLoading(false); // Set loading to false after fetching data
     }
   };
 
@@ -188,41 +193,82 @@ export default function TableManagement() {
     toast.success("Tables added successfully!");
   };
 
+  if (loading) {
+    return (
+      <div className="w-full h-full p-6 bg-gray-50 overflow-auto">
+        <ToastContainer />
+        <h1 className="text-3xl font-semibold mb-6 text-center text-gray-800">Table Management</h1>
+
+        {/* Add Category Button */}
+        <div className="flex justify-end mb-6">
+          <Skeleton className="h-12 w-44" />
+        </div>
+
+        <div className="space-y-6">
+          {[...Array(2)].map((_, index) => (
+            <div key={index} className="p-6 border rounded-lg bg-white shadow-md">
+              <div className="flex justify-between items-center mb-4">
+                <Skeleton className="h-6 w-32" />
+                <div className="flex gap-2">
+                  <Skeleton className="h-10 w-20" />
+                  <Skeleton className="h-10 w-20" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-8 gap-4 p-2">
+                {[...Array(16)].map((_, i) => (
+                  <Skeleton key={i} className="w-24 h-24" />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full h-screen p-4 overflow-auto">
+    <div className="w-full h-full p-6 bg-gray-50 overflow-auto">
       <ToastContainer />
-      <h1 className="text-2xl font-semibold mb-4 text-center">Table Management</h1>
+      <h1 className="text-3xl font-semibold mb-6 text-center text-gray-800">Table Management</h1>
 
       {/* Add Category Button */}
-      <div className="flex justify-end mb-4">
-        <Button onClick={() => setOpenCategoryDialog(true)} variant="primary">
+      <div className="flex justify-end mb-6">
+        <Button
+          onClick={() => setOpenCategoryDialog(true)}
+          className="bg-gray-900 text-white hover:bg-gray-700"
+        >
           <Plus className="w-5 h-5 mr-2" /> Add Category
         </Button>
       </div>
 
-      <div className="space-y-6 w-full">
-        {categorie.map((category) => (
-          <div key={category.id} className="p-4 border rounded-lg bg-gray-100 shadow-md w-full">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-lg font-semibold">{category.name}</h2>
-              <div className="flex gap-2">
-                <Button onClick={() => openEditCategoryDialog(category)} variant="outline">
-                  <Pencil className="w-4 h-4 mr-2" /> Edit
-                </Button>
-                <Button onClick={() => deleteCategory(category.documentId)} variant="destructive">
-                  <Trash2 className="w-4 h-4 mr-2" /> Delete
-                </Button>
+      <div className="space-y-6">
+        {categorie.length === 0 ? (
+          <div className="text-center text-gray-500">No Categories Found.</div>
+        ) : (
+          categorie.map((category) => (
+            <div key={category.id} className="p-6 border rounded-lg bg-white shadow-md">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-gray-700">{category.name}</h2>
+                <div className="flex gap-2">
+                  <Button onClick={() => openEditCategoryDialog(category)} variant="outline">
+                    <Pencil className="w-4 h-4 mr-2" /> Edit
+                  </Button>
+                  <Button onClick={() => deleteCategory(category.documentId)} variant="destructive">
+                    <Trash2 className="w-4 h-4 mr-2" /> Delete
+                  </Button>
+                </div>
+              </div>
+              <div className={`grid grid-cols-2 md:grid-cols-8 gap-4 p-2 ${category.tables.length > 5 ? "overflow-y-auto max-h-60" : ""}`}>
+                {category.tables.map((table) => (
+                  <div key={`${category.documentId}-${table}`} className="flex flex-col items-center justify-center w-24 h-24 border-2 rounded-lg shadow bg-gray-100">
+                    <MdOutlineTableRestaurant className="w-8 h-8 mb-2 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-700">{table}</span>
+                  </div>
+                ))}
               </div>
             </div>
-            <div className={`grid grid-cols-2 md:grid-cols-8 gap-4 p-2 ${category.tables.length > 5 ? "overflow-y-auto max-h-60" : ""}`}>
-              {category.tables.map((table) => (
-                <div key={`${category.documentId}-${table}`} className="flex flex-col items-center justify-center w-20 h-20 border-2 rounded-lg shadow bg-white">
-                  <span className="text-sm font-medium">{table}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* Add Table Dialog */}

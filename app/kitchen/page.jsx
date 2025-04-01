@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function KitchenPage() {
   const [orders, setOrders] = useState([]);
@@ -63,15 +64,19 @@ function KitchenPage() {
   };
 
   return (
-    <div className="p-5 h-screen w-screen flex flex-col items-center justify-center bg-gray-100">
-      <h1 className="text-2xl font-bold mb-4">Kitchen Orders</h1>
+    <div className="p-5 w-full h-full flex flex-col items-center justify-center bg-gray-100">
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">Kitchen Orders</h1>
       {loading ? (
-        <p>Loading orders...</p>
+        <div className="w-full max-w-5xl space-y-4">
+          <Skeleton className="h-12" />
+          <Skeleton className="h-12" />
+          <Skeleton className="h-12" />
+        </div>
       ) : orders.length === 0 ? (
-        <p>No orders available</p>
+        <p className="text-lg text-gray-600">No orders available</p>
       ) : (
-        <div className="overflow-x-auto w-full max-w-full h-full flex justify-center items-center">
-          <table className="min-w-full bg-white border border-gray-300 h-full">
+        <div className="overflow-x-auto w-full max-w-5xl">
+          <table className="min-w-full bg-white border border-gray-300">
             <thead>
               <tr className="bg-gray-200">
                 <th className="border px-4 py-2">Bill No.</th>
