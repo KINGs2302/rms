@@ -6,26 +6,17 @@ import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"; // Import the Skeleton component
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer, toast } from "react-toastify";
+import { RiAdminLine } from "react-icons/ri";
+import { PiChefHatBold } from "react-icons/pi";
+import { GrUserWorker } from "react-icons/gr";
 
 export default function EmployeeRegister() {
   const [active, setActive] = useState("Staff");
@@ -283,8 +274,17 @@ export default function EmployeeRegister() {
 
 // Displays a header for each section (Admin, Chef, Waiter).
 function SectionHeader({ title }) {
+  const icons = {
+    Admin: <RiAdminLine className="inline-block w-5 h-5 mr-2" />,
+    Chef: <PiChefHatBold className="inline-block w-5 h-5 mr-2" />,
+    Waiter: <GrUserWorker className="inline-block w-5 h-5 mr-2" />,
+  };
+
   return (
-    <h2 className="text-xl font-semibold mb-2 border-b pb-1">{title}</h2>
+    <h2 className="text-xl font-semibold mb-2 border-b pb-1 flex items-center">
+      {icons[title]}
+      {title}
+    </h2>
   );
 }
 

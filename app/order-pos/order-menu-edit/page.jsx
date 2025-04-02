@@ -8,6 +8,9 @@ import autoTable from "jspdf-autotable";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
+import { FaPlus, FaMinus, FaCheck, FaEdit } from "react-icons/fa"; // ✅ Import icons from react-icons
+import { Skeleton } from "@/components/ui/skeleton";
+
 function OrderMenuEdits() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
@@ -19,6 +22,7 @@ function OrderMenuEdits() {
   const [tableNumber, setTableNumber] = useState("Unknown");
   const [tableCategory, setTableCategory] = useState("Unknown"); // ✅ Add tableCategory state
   const [existingOrder, setExistingOrder] = useState(null);
+  const [loading, setLoading] = useState(true); // ✅ Add loading state
   const router = useRouter();
 
   useEffect(() => {
@@ -56,6 +60,8 @@ function OrderMenuEdits() {
     } catch (error) {
       console.error("Error fetching order:", error);
       toast.error("Failed to fetch order details.");
+    } finally {
+      setLoading(false); // ✅ Set loading to false after data is fetched
     }
   };
 
@@ -83,6 +89,8 @@ function OrderMenuEdits() {
         setCategories([{ id: "all", category: "All" }, ...(categoryData.data || [])]);
       } catch (error) {
         console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false); // ✅ Set loading to false after data is fetched
       }
     };
 
@@ -138,7 +146,6 @@ function OrderMenuEdits() {
           special_request: order[itemId].special_request || "",
         };
       }).filter(Boolean); // Remove null values
-      // Remove null values
 
       if (orderDetails.length === 0) {
         alert("No valid items in order.");
@@ -169,76 +176,72 @@ function OrderMenuEdits() {
 
       // Generate PDF
       const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 15;
-    const contentWidth = pageWidth - 2 * margin;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 15;
+      const contentWidth = pageWidth - 2 * margin;
 
-    // Header - Styled with a background
-    doc.setFillColor(240, 248, 255); // Light blue background
-    doc.rect(0, 0, pageWidth, 60, "F");
+      // Header - Styled with a background
+      doc.setFillColor(240, 248, 255); // Light blue background
+      doc.rect(0, 0, pageWidth, 60, "F");
 
-    // Restaurant Name
-    doc.setFontSize(24);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(0, 0, 0); // Black text
-    doc.text(restro_name, contentWidth / 2 + margin, 30, { align: "center" });
+      // Restaurant Name
+      doc.setFontSize(24);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(0, 0, 0); // Black text
+      doc.text(restro_name, contentWidth / 2 + margin, 30, { align: "center" });
 
-    // Address and Contact
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text("101- abc park, xyz road,", contentWidth / 2 + margin, 45, { align: "center" });
-    doc.text("pqr city, gujarat-123456", contentWidth / 2 + margin, 52, { align: "center" });
-    doc.text("(Mob): 0000000000", contentWidth / 2 + margin, 59, { align: "center" });
+      // Address and Contact
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text("101- abc park, xyz road,", contentWidth / 2 + margin, 45, { align: "center" });
+      doc.text("pqr city, gujarat-123456", contentWidth / 2 + margin, 52, { align: "center" });
+      doc.text("(Mob): 0000000000", contentWidth / 2 + margin, 59, { align: "center" });
 
-    // Bill Details
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0); // Reset text color
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, margin, 75);
-    doc.text(`Table: ${tableNumber}`, contentWidth - 80 + margin, 75);
-    doc.text("Cashier: System", margin, 82);
-    doc.text(`Bill-No. : ${response.data.data.Bill_no}`, contentWidth - 80 + margin, 82);
+      // Bill Details
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0); // Reset text color
+      doc.text(`Date: ${new Date().toLocaleDateString()}`, margin, 75);
+      doc.text(`Table: ${tableNumber}`, contentWidth - 80 + margin, 75);
+      doc.text("Cashier: System", margin, 82);
+      doc.text(`Bill-No. : ${response.data.data.Bill_no}`, contentWidth - 80 + margin, 82);
 
-    // Table Headers
-    autoTable(doc, {
-      startY: 90,
-      head: [["Item", "Qty", "Price", "Amount"]],
-      body: Object.keys(order).map((itemName) => [
-        itemName,
-        order[itemName].quantity,
-        `₹${order[itemName].price.toFixed(2)}`,
-        `₹${(order[itemName].price * order[itemName].quantity).toFixed(2)}`,
-      ]),
-      theme: "grid",
-      styles: { font: "helvetica", fontSize: 12, cellPadding: 8, textColor: [0, 0, 0] },
-      headStyles: { fillColor: [52, 152, 219], textColor: [255, 255, 255], fontStyle: "bold" },
-      alternateRowStyles: { fillColor: [248, 248, 248] },
-    });
+      // Table Headers
+      autoTable(doc, {
+        startY: 90,
+        head: [["Item", "Qty", "Price", "Amount"]],
+        body: Object.keys(order).map((itemName) => [
+          itemName,
+          order[itemName].quantity,
+          `₹${order[itemName].price.toFixed(2)}`,
+          `₹${(order[itemName].price * order[itemName].quantity).toFixed(2)}`,
+        ]),
+        theme: "grid",
+        styles: { font: "helvetica", fontSize: 12, cellPadding: 8, textColor: [0, 0, 0] },
+        headStyles: { fillColor: [52, 152, 219], textColor: [255, 255, 255], fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [248, 248, 248] },
+      });
 
-    let finalY = doc.lastAutoTable.finalY + 15;
+      let finalY = doc.lastAutoTable.finalY + 15;
 
-    // Total Calculation
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text(`Sub Total: ₹${totalAmount.toFixed(2)}`, contentWidth - 120 + margin, finalY);
-    doc.setFont("helvetica", "normal");
-    doc.text(`SGST: ₹${(totalAmount * 0.025).toFixed(2)} (2.5%)`, contentWidth - 120 + margin, finalY + 8);
-    doc.text(`CGST: ₹${(totalAmount * 0.025).toFixed(2)} (2.5%)`, contentWidth - 120 + margin, finalY + 16);
-    
+      // Total Calculation
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text(`Sub Total: ₹${totalAmount.toFixed(2)}`, contentWidth - 120 + margin, finalY);
+      doc.setFont("helvetica", "normal");
+      doc.text(`SGST: ₹${(totalAmount * 0.025).toFixed(2)} (2.5%)`, contentWidth - 120 + margin, finalY + 8);
+      doc.text(`CGST: ₹${(totalAmount * 0.025).toFixed(2)} (2.5%)`, contentWidth - 120 + margin, finalY + 16);
 
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text(`Grand Total: ₹${(totalAmount + totalAmount * 0.05 ).toFixed(2)}`, contentWidth - 120 + margin, finalY + 35);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text(`Grand Total: ₹${(totalAmount + totalAmount * 0.05).toFixed(2)}`, contentWidth - 120 + margin, finalY + 35);
 
-    // Footer
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(100, 100, 100); // Gray text
-    doc.text("Thanks for Visiting!", contentWidth / 2 + margin, finalY + 50, { align: "center" });
+      // Footer
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 100, 100); // Gray text
+      doc.text("Thanks for Visiting!", contentWidth / 2 + margin, finalY + 50, { align: "center" });
 
-    doc.save(`Table-${tableNumber}-Bill.pdf`);
-
-    
-
+      doc.save(`Table-${tableNumber}-Bill.pdf`);
 
       setOrder({});
       router.push("/order-pos");
@@ -301,14 +304,13 @@ function OrderMenuEdits() {
     } catch (error) {
       console.error("Error updating order:", error);
       toast.error("Failed to update order. Please try again.");
-
     }
   };
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <div className="flex flex-col h-full w-full">
-      <ToastContainer />
+        <ToastContainer />
         <div className="bg-gray-300 text-center py-2 text-lg font-semibold">
           Table Number: {tableNumber} | Table Category: {tableCategory} {/* ✅ Display tableCategory */}
         </div>
@@ -332,35 +334,50 @@ function OrderMenuEdits() {
             </div>
           </aside>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-5 w-5/6 max-h-20">
-            {filteredMenu.map((item) => (
-              <div key={item.id} className="bg-white p-4 rounded-2xl shadow-md text-center">
-                {item.image?.url && (
-                  <img src={item.image.url} alt={item.item_name} className="rounded-full mx-auto w-24 h-24" />
-                )}
-                <h3 className="text-lg font-semibold mt-3">
-                  {item.item_name} - <span className="text-red-500 font-bold">{item.price}/- Rs.</span>
-                </h3>
-                <p className="text-gray-600">Category: {item.category?.category}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-5 w-5/6 max-h-20">
+            {loading ? (
+             Array.from({ length: 8 }).map((_, index) => (
+                               <div
+                                 key={index}
+                                 className=" p-5 rounded-2xl shadow-md text-center min-h-60"
+                               >
+                                 <Skeleton key={index} height={96} width={96} className=" rounded-2xl" />
+                                 <Skeleton height={20} width="80%" className="mt-3" />
+                                 <Skeleton height={15} width="60%" />
+                                 <Skeleton height={30} width="50%" className="mt-2" />
+                               </div>
+                             ))
+            ) : (
+              filteredMenu.map((item) => (
+                <div key={item.id} className="bg-white p-4 rounded-2xl shadow-md text-center">
+                  {item.image?.url && (
+                    <img src={item.image.url} alt={item.item_name} className="rounded-full mx-auto w-24 h-24" />
+                  )}
+                  <h3 className="text-lg font-semibold mt-3 truncate">
+                    {item.item_name} {" "}
+                  </h3>
+                  <p> price:- <span className="text-red-500 font-bold">{item.price}/- Rs.</span></p>
+                  <p className="text-gray-600">Category: {item.category?.category}</p>
 
-                <div className="flex justify-center items-center mt-2 space-x-3">
-                  <button
-                    className="bg-red-400 text-white px-3 py-1 rounded-lg"
-                    onClick={() => handleRemoveFromOrder(item)}
-                    disabled={!order[item.item_name]}
-                  >
-                    ➖
-                  </button>
-                  <span className="text-lg font-semibold">{order[item.item_name]?.quantity || 0}</span>
-                  <button
-                    className="bg-green-400 text-white px-3 py-1 rounded-lg"
-                    onClick={() => handleAddToOrder(item)}
-                  >
-                    ➕
-                  </button>
+                  <div className="flex justify-center items-center mt-2 space-x-3">
+                    <button
+                      className="bg-red-400 text-white px-3 py-1 rounded-lg"
+                      onClick={() => handleRemoveFromOrder(item)}
+                      disabled={!order[item.item_name]}
+                    >
+                      <FaMinus /> {/* ✅ Add icon */}
+                    </button>
+                    <span className="text-lg font-semibold">{order[item.item_name]?.quantity || 0}</span>
+                    <button
+                      className="bg-green-400 text-white px-3 py-1 rounded-lg"
+                      onClick={() => handleAddToOrder(item)}
+                    >
+                      <FaPlus /> {/* ✅ Add icon */}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -393,15 +410,18 @@ function OrderMenuEdits() {
             </span>
           </div>
 
-          <div className="text-right mt-4">
+          <div className="text-right mt-4 flex justify-end space-x-4">
             <button
-              className="bg-green-500 text-white px-6 py-2 rounded-lg font-semibold"
+              className="bg-green-500 text-white px-6 py-2 rounded-lg font-semibold flex items-center justify-center"
               onClick={handlePayBill}
             >
-              Pay the Bill
+              <FaCheck className="mr-2" /> Pay the Bill {/* ✅ Add icon */}
             </button>
-            <button className="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold" onClick={handleUpdateOrder}>
-              Update Order
+            <button
+              className="bg-red-600 text-white px-6 py-2 rounded-lg font-semibold flex items-center justify-center"
+              onClick={handleUpdateOrder}
+            >
+              <FaEdit className="mr-2" /> Update Order {/* ✅ Add icon */}
             </button>
           </div>
         </div>
