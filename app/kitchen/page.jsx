@@ -34,11 +34,19 @@ function KitchenPage() {
         })),
       }));
 
-      const filteredOrders = fetchedOrders.filter(
+      // Filter orders based on user role
+      let filteredOrders = fetchedOrders.filter(
         (order) =>
           order.Bill_Status !== "Paid" &&
           order.order.some((item) => item.item_status !== "Served")
       );
+
+      // If user is a waiter, show only orders where at least one item is "Prepared"
+      if (localStorage.getItem("role") === "waiter") {
+        filteredOrders = filteredOrders.filter((order) =>
+          order.order.some((item) => item.item_status === "Prepared")
+        );
+      }
 
       setOrders(filteredOrders);
     } catch (error) {
@@ -132,7 +140,11 @@ function KitchenPage() {
             <tbody>
               {orders.map((order) =>
                 order.order
-                  .filter((item) => item.item_status !== "Served") // Exclude "Served" items
+                  .filter(
+                    (item) =>
+                      item.item_status !== "Served" &&
+                      (userRole !== "waiter" || item.item_status === "Prepared") // Waiters see only "Prepared" items
+                  )
                   .map((item, index) => (
                     <tr
                       key={`${order.documentId}-${index}`}
@@ -169,7 +181,6 @@ function KitchenPage() {
       )}
     </div>
   );
-  
 }
 
 export default KitchenPage;

@@ -56,6 +56,7 @@ export default function Navbar({ setActive }) {
     ],
     waiter: [
       { label: "Dashboard", icon: <Home /> },
+      { label: "Kitchen", icon: <Layout />},
       { label: "Order POS", icon: <ShoppingCart /> },
       { label: "Profile", icon: <User /> }
     ]
