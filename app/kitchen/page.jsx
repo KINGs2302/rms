@@ -37,7 +37,7 @@ function KitchenPage() {
       const filteredOrders = fetchedOrders.filter(
         (order) =>
           order.Bill_Status !== "Paid" &&
-          order.order.some((item) => item.item_status !== "Placed")
+          order.order.some((item) => item.item_status !== "Served")
       );
 
       setOrders(filteredOrders);
@@ -87,11 +87,11 @@ function KitchenPage() {
   const getStatusOptions = () => {
     switch (userRole) {
       case "admin":
-        return ["Ordered", "Preparing", "Prepared", "Placed"];
+        return ["Ordered", "Preparing", "Prepared", "Served"];
       case "chef":
         return ["Ordered", "Preparing", "Prepared"];
       case "waiter":
-        return ["Prepared", "Placed"];
+        return ["Prepared", "Served"];
       default:
         return [];
     }
@@ -124,7 +124,7 @@ function KitchenPage() {
             <tbody>
               {orders.map((order) =>
                 order.order
-                  .filter((item) => item.item_status !== "Placed") // Exclude "Placed" items
+                  .filter((item) => item.item_status !== "Served") // Exclude "Served" items
                   .map((item, index) => (
                     <tr key={`${order.documentId}-${index}`} className="border-t">
                       <td className="border px-4 py-2">{order.Bill_no}</td>
