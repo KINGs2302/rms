@@ -23,10 +23,20 @@ function Billing() {
     const token = localStorage.getItem("token");
     const billStatus = showHistory ? "Paid" : "Unpaid";
     let filterQuery = "";
-  
+
+    const formatDate = (date) => {
+      const [year, month, day] = date.split("-");
+      return `${year}-${month}-${day}`;
+    };
+    
     if (startDate && endDate) {
-      const formattedStartDate = new Date(startDate).toISOString().split("T")[0];
-      const formattedEndDate = new Date(endDate).toISOString().split("T")[0];
+      var formattedStartDate = new Date(startDate).toISOString().split("T")[0];
+      var formattedEndDate = new Date(endDate).toISOString().split("T")[0];
+      console.log(formattedStartDate);
+      formattedStartDate=formatDate(formattedStartDate);
+      console.log(formattedStartDate);
+      formattedEndDate=formatDate(formattedEndDate);
+      
       filterQuery = `&filters[updatedAt][$gte]=${formattedStartDate}&filters[updatedAt][$lte]=${formattedEndDate}`;
     }
   
@@ -35,7 +45,7 @@ function Billing() {
         `https://restro-backend-0ozo.onrender.com/api/poses?filters[restro_name][$eq]=${restro_name}&filters[Bill_Status][$eq]=${billStatus}${filterQuery}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
+      console.log(response);
       const sortedOrders = (response.data?.data || []).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
       setOrders(sortedOrders);
     } catch (error) {
@@ -88,12 +98,19 @@ function Billing() {
             type="date"
             className="border rounded-md px-2 py-1"
             value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+            onChange={(e) => {
+              setStartDate(e.target.value);
+              if (endDate && e.target.value > endDate) {
+                setEndDate(""); // Reset endDate if it's before startDate
+              }
+            }}
+            
           />
           <input
             type="date"
             className="border rounded-md px-2 py-1"
             value={endDate}
+            min={startDate} // Ensures endDate can't be before startDate
             onChange={(e) => setEndDate(e.target.value)}
           />
         </div>
