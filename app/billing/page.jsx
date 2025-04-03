@@ -37,7 +37,7 @@ function Billing() {
       console.log(formattedStartDate);
       formattedEndDate=formatDate(formattedEndDate);
       
-      filterQuery = `&filters[updatedAt][$gte]=${formattedStartDate}&filters[updatedAt][$lte]=${formattedEndDate}`;
+      filterQuery = `&filters[updatedAt][$gte]=${formattedStartDate}&filters[updatedAt][$lte]=${formattedEndDate}T23:59:59.999Z`;
     }
   
     try {
