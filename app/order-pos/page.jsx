@@ -181,7 +181,7 @@ export default function OrderPOS() {
                       </div>
                     )}
                     {tableOrder && (
-                      <button className="absolute bottom-[-20] bg-white p-2 rounded-md shadow-lg hover:bg-gray-100">
+                      <button className="absolute bottom-[-20] bg-white p-2 rounded-md shadow-lg hover:bg-gray-100 md:bottom-[-20]">
                         <FaDownload className="text-gray-600" />
                       </button>
                     )}

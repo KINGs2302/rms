@@ -335,63 +335,50 @@ function OrderMenuEdits() {
           </aside>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-5 w-5/6">
-                      {loading
-                        ? Array.from({ length: 8 }).map((_, index) => (
-                            <div
-                              key={index}
-                              className=" p-4 rounded-2xl shadow-md text-center"
-                            >
-                              <Skeleton height={96} width={96} className=" rounded-2xl" />
-                              <Skeleton height={20} width="80%" className="mt-3" />
-                              <Skeleton height={15} width="60%" />
-                              <Skeleton height={30} width="50%" className="mt-2" />
-                            </div>
-                          ))
-                        : filteredMenu.map((item) => (
-                            <div
-                              key={item.id}
-                              className="bg-white p-4 rounded-2xl shadow-md text-center h-fit"
-                            >
-                              {item.image?.url && (
-                                <img
-                                  src={item.image.url}
-                                  alt={item.item_name}
-                                  className="rounded-full mx-auto w-24 h-24"
-                                />
-                              )}
-                              <h3 className="text-lg font-semibold mt-3 truncate">
-                                {item.item_name}{" "}
-                              </h3>
-                              <p className="text-gray-600 truncate">
-                                Price:  <span className="text-red-500 font-bold">
-                                  {item.price}/- Rs.
-                                </span>
-                              </p>
-                              <p className="text-gray-600 truncate">
-                                Category: {item.category?.category}
-                              </p>
-          
-                              <div className="flex justify-center items-center mt-2 space-x-3">
-                                <button
-                                  className="bg-red-400 text-white px-3 py-1 rounded-lg flex items-center"
-                                  onClick={() => handleRemoveFromOrder(item)}
-                                  disabled={!order[item.id]}
+             {loading ? (
+              Array.from({ length: 8 }).map((_, index) => (
+                                <div
+                                  key={index}
+                                  className=" p-5 rounded-2xl shadow-md text-center min-h-60"
                                 >
-                                  <FaMinus />
-                                </button>
-                                <span className="text-lg font-semibold">
-                                  {order[item.id] || 0}
-                                </span>
-                                <button
-                                  className="bg-green-400 text-white px-3 py-1 rounded-lg flex items-center"
-                                  onClick={() => handleAddToOrder(item)}
-                                >
-                                  <FaPlus />
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                    </div>
+                                  <Skeleton key={index} height={96} width={96} className=" rounded-2xl" />
+                                  <Skeleton height={20} width="80%" className="mt-3" />
+                                  <Skeleton height={15} width="60%" />
+                                  <Skeleton height={30} width="50%" className="mt-2" />
+                                </div>
+                              ))
+             ) : (
+               filteredMenu.map((item) => (
+                 <div key={item.id} className="bg-white p-4 rounded-2xl shadow-md h-fit ">
+                   {item.image?.url && (
+                     <img src={item.image.url} alt={item.item_name} className="rounded-full mx-auto w-24 h-24" />
+                   )}
+                   <h3 className="text-lg font-semibold mt-3 truncate">
+                     {item.item_name} {" "}
+                   </h3>
+                   <p> price:- <span className="text-red-500 font-bold">{item.price}/- Rs.</span></p>
+                   <p className="text-gray-600">Category: {item.category?.category}</p>
+ 
+                   <div className="flex justify-center items-center mt-2 space-x-3">
+                     <button
+                       className="bg-red-400 text-white px-3 py-1 rounded-lg"
+                       onClick={() => handleRemoveFromOrder(item)}
+                       disabled={!order[item.item_name]}
+                     >
+                       <FaMinus /> {/* ✅ Add icon */}
+                     </button>
+                     <span className="text-lg font-semibold">{order[item.item_name]?.quantity || 0}</span>
+                     <button
+                       className="bg-green-400 text-white px-3 py-1 rounded-lg"
+                       onClick={() => handleAddToOrder(item)}
+                     >
+                       <FaPlus /> {/* ✅ Add icon */}
+                     </button>
+                   </div>
+                 </div>
+               ))
+             )}
+           </div>
         </div>
 
         <div className="bg-gray-100 p-5">
