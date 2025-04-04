@@ -12,6 +12,14 @@ function KitchenPage() {
     fetchOrders();
     const role = localStorage.getItem("role"); // Fetch role from localStorage
     setUserRole(role);
+
+    // Set up a timer to fetch orders every 30 seconds
+    const intervalId = setInterval(() => {
+      fetchOrders();
+    }, 3000); // 30 seconds
+
+    // Cleanup the interval on component unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   const fetchOrders = async () => {

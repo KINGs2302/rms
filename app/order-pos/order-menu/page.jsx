@@ -3,6 +3,8 @@ import React, { useEffect, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FaPlus, FaMinus, FaShoppingCart } from "react-icons/fa";
 
@@ -139,19 +141,20 @@ function OrderMenus() {
       );
 
       console.log("Order Placed Successfully:", response.data);
-      alert("Order Placed Successfully!");
+      toast.success("Order Placed Successfully!");
       router.push("/order-pos");
 
       setOrder({});
     } catch (error) {
       console.error("Error placing order:", error);
-      alert("Failed to place order. Please try again.");
+      toast.error("Failed to place order. Please try again.");
     }
   };
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <div className="flex flex-col h-full w-full">
+      <ToastContainer/>
         <div className="bg-gray-300 text-center py-2 text-lg font-semibold">
           Table Number: {tableNumber}
         </div>

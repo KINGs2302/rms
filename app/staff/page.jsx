@@ -172,7 +172,7 @@ export default function EmployeeRegister() {
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-100 w-full">
       <ToastContainer />
   
-      <main className="relative flex-1 p-4 md:p-5 mt-16 md:mt-0 flex flex-col md:flex-row gap-6 z-50 w-full">
+      <main className="relative flex-1 p-4 md:p-5 mt-16 md:mt-0 flex flex-col md:flex-row gap-6 z-30 w-full">
         {/* Employee Registration Form */}
         <Card className="bg-white rounded-md shadow-md w-full md:w-1/3 lg:w-1/4 h-fit sticky top-5 z-50">
           <CardHeader>
