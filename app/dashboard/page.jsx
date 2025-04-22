@@ -1,20 +1,225 @@
 "use client";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { Bar, Pie } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+// Register required Chart.js components
+ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 
 export default function Dashboard() {
   const [active, setActive] = useState("Dashboard");
   const [loginUser, setLoginUser] = useState("User");
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Get login user from localStorage
     if (typeof window !== "undefined") {
       setLoginUser(localStorage.getItem("loginuser") || "User");
     }
+
+    // Fetch API data with token from localStorage
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem("token"); // ensure you have stored your token here
+        const restro_name = localStorage.getItem("restroname");
+        
+        const response = await fetch(`https://restro-backend-0ozo.onrender.com/api/poses?filters[restro_name][$eq]=${restro_name}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await response.json();
+        setOrders(data.data); // assuming your API data is in the "data" property
+      } catch (err) {
+        console.error(err);
+        setError("Error fetching data");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, []);
 
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+
+  // --- Calculate KPI values ---
+  const totalSales = orders.reduce((sum, order) => sum + order.Total, 0);
+  const totalOrders = orders.length;
+  const avgOrderValue = (totalSales / totalOrders).toFixed(2);
+
+  // --- Monthly Sales Analysis ---
+  const monthlySales = {};
+  orders.forEach((order) => {
+    const date = new Date(order.createdAt);
+    const monthYear = `${date.getFullYear()}-${(date.getMonth() + 1)
+      .toString()
+      .padStart(2, "0")}`;
+    monthlySales[monthYear] = (monthlySales[monthYear] || 0) + order.Total;
+  });
+  const sortedMonthlyKeys = Object.keys(monthlySales).sort(
+    (a, b) => new Date(a + "-01") - new Date(b + "-01")
+  );
+  const monthlySalesData = {
+    labels: sortedMonthlyKeys,
+    datasets: [
+      {
+        label: "Monthly Sales (₹)",
+        data: sortedMonthlyKeys.map((key) => monthlySales[key]),
+        backgroundColor: "rgba(75, 192, 192, 0.6)",
+      },
+    ],
+  };
+
+  // --- Top Products Analysis ---
+  const productSales = {};
+  orders.forEach((order) => {
+    order.order.forEach((item) => {
+      productSales[item.item_name] = (productSales[item.item_name] || 0) + item.quantity;
+    });
+  });
+  const sortedTopProducts = Object.entries(productSales).sort(
+    (a, b) => b[1] - a[1]
+  );
+  const topProductsLabels = sortedTopProducts.map(([name]) => name);
+  const topProductsDataPoints = sortedTopProducts.map(([, qty]) => qty);
+  const productColorsOptions = [
+    "rgba(255, 99, 132, 0.6)",
+    "rgba(54, 162, 235, 0.6)",
+    "rgba(255, 206, 86, 0.6)",
+    "rgba(75, 192, 192, 0.6)",
+    "rgba(153, 102, 255, 0.6)",
+    "rgba(255, 159, 64, 0.6)",
+  ];
+  const topProductsColors = topProductsLabels.map(
+    (_, index) => productColorsOptions[index % productColorsOptions.length]
+  );
+  const topProductsData = {
+    labels: topProductsLabels,
+    datasets: [
+      {
+        label: "Quantity Sold",
+        data: topProductsDataPoints,
+        backgroundColor: topProductsColors,
+      },
+    ],
+  };
+
+  // --- Bill Status Distribution ---
+  const billStatusCount = orders.reduce((acc, order) => {
+    acc[order.Bill_Status] = (acc[order.Bill_Status] || 0) + 1;
+    return acc;
+  }, {});
+  const billStatusLabels = Object.keys(billStatusCount);
+  const billStatusDataPoints = Object.values(billStatusCount);
+  const billStatusColors = billStatusLabels.map((status) =>
+    status === "Paid" ? "rgba(75, 192, 192, 0.6)" : "rgba(255, 99, 132, 0.6)"
+  );
+  const billStatusDataChart = {
+    labels: billStatusLabels,
+    datasets: [
+      {
+        label: "Bill Status Distribution",
+        data: billStatusDataPoints,
+        backgroundColor: billStatusColors,
+      },
+    ],
+  };
+
   return (
-    <>
-      <h1 className="text-3xl font-semibold">{active}</h1>
-      <p>Welcome to the {active}, {loginUser}!</p>
-    </>
+    <div className="container">
+      <h1>Welcome to Restaurant Dashboard</h1>
+      <div className="kpi-container">
+        <div className="kpi-card">
+          <h3>Total Sales (₹)</h3>
+          <p>{totalSales}</p>
+        </div>
+        <div className="kpi-card">
+          <h3>Total Orders</h3>
+          <p>{totalOrders}</p>
+        </div>
+        <div className="kpi-card">
+          <h3>Average Order Value (₹)</h3>
+          <p>{avgOrderValue}</p>
+        </div>
+      </div>
+
+      <div className="chart-section">
+        <div className="chart-card">
+          <h2>Monthly Sales Analysis</h2>
+          <Bar
+            data={monthlySalesData}
+            options={{ responsive: true, maintainAspectRatio: false }}
+          />
+        </div>
+        <div className="chart-card">
+          <h2>Top Products</h2>
+          <Bar
+            data={topProductsData}
+            options={{ responsive: true, maintainAspectRatio: false }}
+          />
+        </div>
+        <div className="chart-card">
+          <h2>Bill Status Distribution</h2>
+          <Pie
+            data={billStatusDataChart}
+            options={{ responsive: true, maintainAspectRatio: false }}
+          />
+        </div>
+      </div>
+
+      <style jsx>{`
+        .container {
+          padding: 20px;
+          font-family: Arial, sans-serif;
+        }
+        h1 {
+          text-align: center;
+          margin-bottom: 40px;
+        }
+        .kpi-container {
+          display: flex;
+          justify-content: space-around;
+          margin-bottom: 30px;
+          flex-wrap: wrap;
+        }
+        .kpi-card {
+          background: #f5f5f5;
+          padding: 20px;
+          border-radius: 8px;
+          text-align: center;
+          margin: 10px;
+          width: 250px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .chart-section {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 20px;
+          justify-content: center;
+        }
+        .chart-card {
+          background: #ffffff;
+          padding: 20px;
+          border: 1px solid #e0e0e0;
+          border-radius: 8px;
+          flex: 1;
+          min-width: 300px;
+          height: 400px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+      `}</style>
+    </div>
   );
 }

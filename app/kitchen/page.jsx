@@ -9,16 +9,14 @@ function KitchenPage() {
   const [userRole, setUserRole] = useState("");
 
   useEffect(() => {
-    fetchOrders();
-    const role = localStorage.getItem("role"); // Fetch role from localStorage
+    // Fetch user role from localStorage
+    const role = localStorage.getItem("role");
     setUserRole(role);
 
-    // Set up a timer to fetch orders every 30 seconds
-    const intervalId = setInterval(() => {
-      fetchOrders();
-    }, 3000); // 30 seconds
+    // Fetch orders initially and every 30 seconds
+    fetchOrders();
+    const intervalId = setInterval(fetchOrders, 30000);
 
-    // Cleanup the interval on component unmount
     return () => clearInterval(intervalId);
   }, []);
 
@@ -34,6 +32,7 @@ function KitchenPage() {
 
       let fetchedOrders = response.data?.data || [];
 
+      // Normalize order item statuses
       fetchedOrders = fetchedOrders.map((order) => ({
         ...order,
         order: order.order.map((item) => ({
@@ -42,15 +41,11 @@ function KitchenPage() {
         })),
       }));
 
-      // Filter orders based on user role
-      let filteredOrders = fetchedOrders.filter(
-        (order) =>
-          order.Bill_Status !== "Paid" &&
-          order.order.some((item) => item.item_status !== "Served")
-      );
+      // Filter out "Served" items and unpaid bills
+      let filteredOrders = fetchedOrders.filter((order) => order.Bill_Status !== "Paid");
 
-      // If user is a waiter, show only orders where at least one item is "Prepared"
-      if (localStorage.getItem("role") === "waiter") {
+      // Additional filtering for waiters: show only "Prepared" items
+      if (userRole === "waiter") {
         filteredOrders = filteredOrders.filter((order) =>
           order.order.some((item) => item.item_status === "Prepared")
         );
@@ -74,6 +69,7 @@ function KitchenPage() {
     updatedOrder.order[itemIndex].item_status = newStatus;
 
     try {
+      // Update status in the database
       await axios.put(
         `https://restro-backend-0ozo.onrender.com/api/poses/${documentId}`,
         {
@@ -89,23 +85,31 @@ function KitchenPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      // Update local state and re-apply filters
       setOrders((prevOrders) =>
-        prevOrders.map((order) =>
-          order.documentId === documentId ? updatedOrder : order
-        )
+        prevOrders
+          .map((order) =>
+            order.documentId === documentId ? updatedOrder : order
+          )
+          .filter((order) =>
+            // Exclude "Served" items directly in local state
+            order.order.some((item) =>
+              userRole === "waiter"
+                ? item.item_status === "Prepared"
+                : item.item_status !== "Served"
+            )
+          )
       );
     } catch (error) {
       console.error("Error updating item status:", error);
     }
   };
 
-  // Define available statuses based on user role
   const getStatusOptions = () => {
     switch (userRole) {
       case "admin":
-        return ["Ordered", "Preparing", "Prepared", "Served"];
       case "chef":
-        return ["Ordered", "Preparing", "Prepared"];
+        return ["Ordered", "Preparing", "Prepared", "Served"];
       case "waiter":
         return ["Prepared", "Served"];
       default:
@@ -113,7 +117,6 @@ function KitchenPage() {
     }
   };
 
-  // Function to determine row background color
   const getRowClass = (status) => {
     if (status === "Preparing") return "bg-green-200";
     if (status === "Prepared") return "bg-yellow-200";
@@ -123,7 +126,7 @@ function KitchenPage() {
   return (
     <div className="p-5 w-full h-screen flex flex-col items-center bg-gray-100 overflow-hidden">
       <h1 className="text-3xl font-bold mb-6 text-gray-800">Kitchen Orders</h1>
-      
+
       {loading ? (
         <div className="w-full max-w-5xl space-y-4">
           <Skeleton className="h-12" />
@@ -148,10 +151,8 @@ function KitchenPage() {
             <tbody>
               {orders.map((order) =>
                 order.order
-                  .filter(
-                    (item) =>
-                      item.item_status !== "Served" &&
-                      (userRole !== "waiter" || item.item_status === "Prepared") // Waiters see only "Prepared" items
+                  .filter((item) =>
+                    userRole === "waiter" ? item.item_status === "Prepared" : true
                   )
                   .map((item, index) => (
                     <tr
@@ -164,7 +165,9 @@ function KitchenPage() {
                       </td>
                       <td className="border px-4 py-2">{item.item_name}</td>
                       <td className="border px-4 py-2">{item.quantity}</td>
-                      <td className="border px-4 py-2">{item.special_request || "None"}</td>
+                      <td className="border px-4 py-2">
+                        {item.special_request || "None"}
+                      </td>
                       <td className="border px-4 py-2">
                         <select
                           className="p-1 border rounded-md"
