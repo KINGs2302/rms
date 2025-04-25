@@ -91,21 +91,21 @@ export default function OrderPOS() {
   };
 
   return (
-    <div className="w-full h-screen p-4 overflow-auto">
-    <div className="flex items-center gap-4 mb-4">
-      <div className="flex items-center gap-2">
-        <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-      <MdOutlineTableRestaurant className="text-white" />
+    <div className="w-full h-screen p-4 pt-12 md:pt-4 overflow-auto">
+      <div className="flex items-center gap-4 mb-4 ">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+            <MdOutlineTableRestaurant className="text-white" />
+          </div>
+          <span className="text-gray-700">Free Table</span>
         </div>
-        <span className="text-gray-700">Free Table</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <div className="w-6 h-6 bg-yellow-300 rounded-full flex items-center justify-center">
-      <MdOutlineTableRestaurant className="text-white" />
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 bg-yellow-300 rounded-full flex items-center justify-center">
+            <MdOutlineTableRestaurant className="text-white" />
+          </div>
+          <span className="text-gray-700">Reserved Table</span>
         </div>
-        <span className="text-gray-700">Reserved Table</span>
       </div>
-    </div>
       <button
         className="absolute top-4 right-4 bg-gray-700 text-white p-2 rounded-md z-10 hover:bg-gray-700"
         onClick={toggleFullscreen}
