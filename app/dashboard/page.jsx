@@ -17,30 +17,33 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Le
 export default function Dashboard() {
   const [active, setActive] = useState("Dashboard");
   const [loginUser, setLoginUser] = useState("User");
+  const [userRole, setUserRole] = useState("");
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Get login user from localStorage
     if (typeof window !== "undefined") {
       setLoginUser(localStorage.getItem("loginuser") || "User");
+      setUserRole(localStorage.getItem("role") || "");
     }
 
-    // Fetch API data with token from localStorage
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem("token"); // ensure you have stored your token here
+        const token = localStorage.getItem("token");
         const restro_name = localStorage.getItem("restroname");
-        
-        const response = await fetch(`https://restro-backend-0ozo.onrender.com/api/poses?filters[restro_name][$eq]=${restro_name}`, {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+
+        const response = await fetch(
+          `https://restro-backend-0ozo.onrender.com/api/poses?filters[restro_name][$eq]=${restro_name}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
         const data = await response.json();
-        setOrders(data.data); // assuming your API data is in the "data" property
+        setOrders(data.data || []);
       } catch (err) {
         console.error(err);
         setError("Error fetching data");
@@ -48,18 +51,27 @@ export default function Dashboard() {
         setLoading(false);
       }
     };
+
     fetchData();
   }, []);
+
+  if (userRole !== "admin") {
+    return (
+      <div style={{ textAlign: "center", marginTop: "50px", fontSize: "1.2rem" }}>
+        ❌ Access Denied: Admins Only
+      </div>
+    );
+  }
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
 
-  // --- Calculate KPI values ---
+  // KPI values
   const totalSales = orders.reduce((sum, order) => sum + order.Total, 0);
   const totalOrders = orders.length;
-  const avgOrderValue = (totalSales / totalOrders).toFixed(2);
+  const avgOrderValue = totalOrders ? (totalSales / totalOrders).toFixed(2) : 0;
 
-  // --- Monthly Sales Analysis ---
+  // Monthly Sales
   const monthlySales = {};
   orders.forEach((order) => {
     const date = new Date(order.createdAt);
@@ -82,16 +94,14 @@ export default function Dashboard() {
     ],
   };
 
-  // --- Top Products Analysis ---
+  // Top Products
   const productSales = {};
   orders.forEach((order) => {
     order.order.forEach((item) => {
       productSales[item.item_name] = (productSales[item.item_name] || 0) + item.quantity;
     });
   });
-  const sortedTopProducts = Object.entries(productSales).sort(
-    (a, b) => b[1] - a[1]
-  );
+  const sortedTopProducts = Object.entries(productSales).sort((a, b) => b[1] - a[1]);
   const topProductsLabels = sortedTopProducts.map(([name]) => name);
   const topProductsDataPoints = sortedTopProducts.map(([, qty]) => qty);
   const productColorsOptions = [
@@ -116,7 +126,7 @@ export default function Dashboard() {
     ],
   };
 
-  // --- Bill Status Distribution ---
+  // Bill Status
   const billStatusCount = orders.reduce((acc, order) => {
     acc[order.Bill_Status] = (acc[order.Bill_Status] || 0) + 1;
     return acc;
@@ -183,41 +193,70 @@ export default function Dashboard() {
         .container {
           padding: 20px;
           font-family: Arial, sans-serif;
+          max-width: 1200px;
+          margin: 0 auto;
         }
+
         h1 {
           text-align: center;
           margin-bottom: 40px;
+          font-size: 2rem;
         }
+
         .kpi-container {
           display: flex;
-          justify-content: space-around;
-          margin-bottom: 30px;
           flex-wrap: wrap;
+          gap: 20px;
+          justify-content: center;
+          margin-bottom: 30px;
         }
+
         .kpi-card {
           background: #f5f5f5;
           padding: 20px;
           border-radius: 8px;
           text-align: center;
-          margin: 10px;
           width: 250px;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
         .chart-section {
           display: flex;
           flex-wrap: wrap;
           gap: 20px;
           justify-content: center;
         }
+
         .chart-card {
           background: #ffffff;
           padding: 20px;
           border: 1px solid #e0e0e0;
           border-radius: 8px;
-          flex: 1;
+          flex: 1 1 300px;
           min-width: 300px;
           height: 400px;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 768px) {
+          .kpi-card {
+            width: 100%;
+          }
+
+          .chart-card {
+            height: 350px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          h1 {
+            font-size: 1.5rem;
+          }
+
+          .chart-card {
+            padding: 10px;
+            height: auto;
+          }
         }
       `}</style>
     </div>
