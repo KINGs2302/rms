@@ -9,11 +9,9 @@ function KitchenPage() {
   const [userRole, setUserRole] = useState("");
 
   useEffect(() => {
-    // Fetch user role from localStorage
     const role = localStorage.getItem("role");
     setUserRole(role);
 
-    // Fetch orders initially and every 30 seconds
     fetchOrders();
     const intervalId = setInterval(fetchOrders, 30000);
 
@@ -32,7 +30,6 @@ function KitchenPage() {
 
       let fetchedOrders = response.data?.data || [];
 
-      // Normalize order item statuses
       fetchedOrders = fetchedOrders.map((order) => ({
         ...order,
         order: order.order.map((item) => ({
@@ -41,10 +38,8 @@ function KitchenPage() {
         })),
       }));
 
-      // Filter out "Served" items and unpaid bills
       let filteredOrders = fetchedOrders.filter((order) => order.Bill_Status !== "Paid");
 
-      // Additional filtering for waiters: show only "Prepared" items
       if (userRole === "waiter") {
         filteredOrders = filteredOrders.filter((order) =>
           order.order.some((item) => item.item_status === "Prepared")
@@ -69,7 +64,6 @@ function KitchenPage() {
     updatedOrder.order[itemIndex].item_status = newStatus;
 
     try {
-      // Update status in the database
       await axios.put(
         `https://restro-backend-0ozo.onrender.com/api/poses/${documentId}`,
         {
@@ -85,14 +79,12 @@ function KitchenPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Update local state and re-apply filters
       setOrders((prevOrders) =>
         prevOrders
           .map((order) =>
             order.documentId === documentId ? updatedOrder : order
           )
           .filter((order) =>
-            // Exclude "Served" items directly in local state
             order.order.some((item) =>
               userRole === "waiter"
                 ? item.item_status === "Prepared"
@@ -151,9 +143,11 @@ function KitchenPage() {
             <tbody>
               {orders.map((order) =>
                 order.order
-                  .filter((item) =>
-                    userRole === "waiter" ? item.item_status === "Prepared" : true
-                  )
+                  .filter((item) => {
+                    if (item.item_status === "Served") return false;
+                    if (userRole === "waiter") return item.item_status === "Prepared";
+                    return true;
+                  })
                   .map((item, index) => (
                     <tr
                       key={`${order.documentId}-${index}`}
