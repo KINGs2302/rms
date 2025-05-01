@@ -62,8 +62,10 @@ export default function Login() {
         localStorage.setItem("token", data.jwt);
         localStorage.setItem("loginuser", data.user.username);
         localStorage.setItem("restroname", data.user.restro_name);
-       
-        toast.success(`Welcome, ${data.user.username}!`);
+        localStorage.setItem("userrole", data.user.role);
+
+        
+        toast.success(`Welcome, ${data.user.userrole}!`);
         
         setTimeout(() => {
           setLoading(false);
