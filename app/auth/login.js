@@ -69,6 +69,7 @@ export default function Login() {
           setLoading(false);
           //Navbar();
           router.push("/dashboard");
+          
         }, 1500);
       } else {
         toast.error("Invalid login credentials");

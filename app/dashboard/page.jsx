@@ -52,20 +52,23 @@ export default function Dashboard() {
         setLoading(false);
       }
     };
-
-    fetchData();
+    fetchData()
+    
   }, []);
 
+  
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+  
   if (userRole !== "admin") {
+    
     return (
       <div style={{ textAlign: "center", marginTop: "50px", fontSize: "1.2rem" }}>
         ❌ Access Denied: Admins Only
       </div>
     );
   }
-
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
 
   // KPI values
   const totalSales = orders.reduce((sum, order) => sum + order.Total, 0);

@@ -100,8 +100,9 @@ function KitchenPage() {
   const getStatusOptions = () => {
     switch (userRole) {
       case "admin":
+        return ["Ordered", "Preparing", "Prepared","Served"]
       case "chef":
-        return ["Ordered", "Preparing", "Prepared", "Served"];
+        return ["Ordered", "Preparing", "Prepared"];
       case "waiter":
         return ["Prepared", "Served"];
       default:
