@@ -317,80 +317,80 @@ export default function Menu() {
         fetchCategories={fetchCategories}
       />
 
-<main className="flex-1 p-5 w-fit h-fit flex-wrap gap-5 items-start overflow-y-auto">
-        <h1 className="text-3xl font-bold w-full flex items-center gap-2 mb-6">
-          <ShoppingCart className="w-7 h-7 text-blue-500" /> {selectedCategory}{" "}
-          Menu
-        </h1>
-        {loading ? (
-          <div className="flex flex-wrap gap-5 p-5 w-full">
-            {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="w-full sm:w-52 h-64 rounded-lg" />
-            ))}
+<main className="flex-1 p-5 overflow-y-auto">
+  <h1 className="text-3xl font-bold w-full flex items-center gap-2 mb-6">
+    <ShoppingCart className="w-7 h-7 text-blue-500" /> {selectedCategory} Menu
+  </h1>
+
+  {loading ? (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5 p-2">
+      {[...Array(8)].map((_, i) => (
+        <Skeleton key={i} className="w-full h-64 rounded-lg" />
+      ))}
+    </div>
+  ) : (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5 p-2">
+      {filteredMenu.map((item) => (
+        <div
+          key={item.id}
+          className="bg-white p-4 rounded-2xl shadow-md text-center h-fit transition transform hover:scale-105 hover:shadow-xl"
+        >
+          {item.image?.url && (
+            <img
+              src={item.image.url}
+              alt={item.item_name}
+              className="rounded-full mx-auto w-24 h-24"
+            />
+          )}
+          <h3 className="text-lg font-semibold mt-3 truncate">
+            {item.item_name}
+          </h3>
+          <p className="text-gray-600 truncate">
+            Price: <span className="text-red-500 font-bold">{item.price}/- Rs.</span>
+          </p>
+          <p className="text-gray-600 truncate">
+            Category: {item.category?.category}
+          </p>
+          <p className="text-gray-700 truncate">
+            Quantity: {item.quantity} {item.parameter}
+          </p>
+          <div className="flex justify-center items-center mt-2 space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setNewItem({
+                  id: item.id,
+                  documentId: item.documentId,
+                  name: item.item_name,
+                  category: item.category.category,
+                  price: item.price,
+                  quantity: item.quantity,
+                  parameter: item.parameter,
+                  image: item.image.id,
+                });
+                setIsEditMode(true);
+                setIsItemModalOpen(true);
+              }}
+              className="flex items-center gap-1"
+            >
+              <Pencil className="w-4 h-4" /> Edit
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => handleDeleteItem(item.documentId)}
+              className="flex items-center gap-1"
+            >
+              <Trash2 className="w-4 h-4" /> Delete
+            </Button>
           </div>
-        ) : (
-          <div className="flex flex-wrap gap-5 p-5">
-            {filteredMenu.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white p-4 rounded-2xl shadow-lg w-full sm:w-52 text-left transition transform hover:scale-105 hover:shadow-xl"
-                style={{ height: "16rem" }}
-              >
-                <Image
-                  src={item.image.url || item.image.formats.thumbnail.url}
-                  alt="image"
-                  width={50}
-                  height={50}
-                  className="rounded-full border border-gray-300 mx-auto"
-                />
-                <h3 className="text-lg font-semibold mt-2 truncate">
-                  Name:- {item.item_name}:{" "}
-                </h3>
-                <h3 className="text-lg font-semibold truncate">
-                  Price:- <span className="text-red-500 font-bold">
-                    {item.price}/- Rs.
-                  </span>
-                </h3>
-                <p className="text-gray-600 text-sm truncate">
-                  category:- {item.category.category}
-                </p>
-                <p className="text-gray-700 text-sm truncate">
-                  Quantity: {item.quantity} {item.parameter}
-                </p>
-                <div className="flex mt-3 space-x-2">
-                  <Button
-                    variant="outline"
-                    className="flex items-center gap-1"
-                    onClick={() => {
-                      setNewItem({
-                        id: item.id,
-                        documentId: item.documentId,
-                        name: item.item_name,
-                        category: item.category.category,
-                        price: item.price,
-                        quantity: item.quantity,
-                        parameter: item.parameter,
-                        image: item.image.id,
-                      });
-                      setIsEditMode(true);
-                      setIsItemModalOpen(true);
-                    }}
-                  >
-                    <Pencil className="w-4 h-4" /> Edit
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    className="flex items-center gap-1"
-                    onClick={() => handleDeleteItem(item.documentId)}
-                  >
-                    <Trash2 className="w-4 h-4" /> Delete
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </main>
+        </div>
+      ))}
+    </div>
+  )}
+</main>
+
 
       <Dialog open={isItemModalOpen} onOpenChange={setIsItemModalOpen}>
         <DialogContent>

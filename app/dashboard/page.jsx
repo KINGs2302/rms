@@ -26,6 +26,7 @@ export default function Dashboard() {
     if (typeof window !== "undefined") {
       setLoginUser(localStorage.getItem("loginuser") || "User");
       setUserRole(localStorage.getItem("role") || "");
+      
     }
 
     const fetchData = async () => {
