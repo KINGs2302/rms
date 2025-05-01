@@ -87,7 +87,7 @@ export default function Category({ categories, setSelectedCategory, selectedCate
   };
 
   return (
-    <aside className="w-full md:w-1/6 mb-2 bg-gray-200 h-full flex flex-col transition-transform duration-300">
+    <aside className=" w-fit md:w-1/6 mb-2 bg-gray-200 h-full flex flex-col transition-transform duration-300">
       <h2 className="text-xl p-5 text-right font-semibold text-gray-800">
         Categories
       </h2>
