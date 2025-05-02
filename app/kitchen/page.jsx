@@ -7,18 +7,31 @@ function KitchenPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState("");
+  const [secondsLeft, setSecondsLeft] = useState(30);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     const role = localStorage.getItem("role");
     setUserRole(role);
 
     fetchOrders();
-    const intervalId = setInterval(fetchOrders, 30000);
+    const intervalId = setInterval(() => {
+      fetchOrders();
+    }, 30000);
 
     return () => clearInterval(intervalId);
   }, []);
 
+  useEffect(() => {
+    const countdown = setInterval(() => {
+      setSecondsLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(countdown);
+  }, []);
+
   const fetchOrders = async () => {
+    setSecondsLeft(30); // Reset timer
+
     const restro_name = localStorage.getItem("restroname");
     const token = localStorage.getItem("token");
 
@@ -100,7 +113,7 @@ function KitchenPage() {
   const getStatusOptions = () => {
     switch (userRole) {
       case "admin":
-        return ["Ordered", "Preparing", "Prepared","Served"]
+        return ["Ordered", "Preparing", "Prepared", "Served"];
       case "chef":
         return ["Ordered", "Preparing", "Prepared"];
       case "waiter":
@@ -116,10 +129,57 @@ function KitchenPage() {
     return "";
   };
 
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
   return (
-    <div className="p-5 w-full h-screen flex flex-col items-center bg-gray-100 overflow-hidden">
+    <div className="p-5 w-full h-screen flex flex-col items-center bg-gray-100 overflow-hidden relative">
+
+      {/* Fullscreen Toggle Button */}
+      <div className="fixed top-4 right-4 z-50">
+        <button
+          onClick={toggleFullscreen}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl shadow-md transition-all text-sm font-medium"
+        >
+          {isFullscreen ? "Exit Full Screen" : "Enter Full Screen"}
+        </button>
+      </div>
+
+      {/* Heading */}
       <h1 className="text-3xl font-bold mb-6 text-gray-800">Kitchen Orders</h1>
 
+      {/* Timer UI */}
+      <div className="w-full max-w-5xl mb-4">
+        <div className="text-sm text-gray-600 mb-1">
+          Refreshing in {secondsLeft}s
+        </div>
+        <div className="w-full bg-gray-300 rounded-full h-2">
+          <div
+            className="bg-green-500 h-2 rounded-full transition-all duration-1000 ease-linear"
+            style={{ width: `${(secondsLeft / 30) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Orders Table or Loading */}
       {loading ? (
         <div className="w-full max-w-5xl space-y-4">
           <Skeleton className="h-12" />
