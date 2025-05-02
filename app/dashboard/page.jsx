@@ -11,7 +11,6 @@ import {
   Legend,
 } from "chart.js";
 
-// Register required Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 
 export default function Dashboard() {
@@ -23,14 +22,16 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setLoginUser(localStorage.getItem("loginuser") || "User");
-      setUserRole(localStorage.getItem("role") || "");
-      
-    }
-
-    const fetchData = async () => {
+    const startDashboard = async () => {
       try {
+        // Wait for 3 seconds before proceeding
+        await new Promise((res) => setTimeout(res, 3000));
+
+        if (typeof window !== "undefined") {
+          setLoginUser(localStorage.getItem("loginuser") || "User");
+          setUserRole(localStorage.getItem("role") || "");
+        }
+
         const token = localStorage.getItem("token");
         const restro_name = localStorage.getItem("restroname");
 
@@ -52,17 +53,13 @@ export default function Dashboard() {
         setLoading(false);
       }
     };
-    fetchData()
-    
+
+    startDashboard();
   }, []);
 
-  
-
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div style={{ textAlign: "center", marginTop: "50px" }}>⏳ Loading...</div>;
   if (error) return <div>{error}</div>;
-  
   if (userRole !== "admin") {
-    
     return (
       <div style={{ textAlign: "center", marginTop: "50px", fontSize: "1.2rem" }}>
         ❌ Access Denied: Admins Only
@@ -70,12 +67,10 @@ export default function Dashboard() {
     );
   }
 
-  // KPI values
   const totalSales = orders.reduce((sum, order) => sum + order.Total, 0);
   const totalOrders = orders.length;
   const avgOrderValue = totalOrders ? (totalSales / totalOrders).toFixed(2) : 0;
 
-  // Monthly Sales
   const monthlySales = {};
   orders.forEach((order) => {
     const date = new Date(order.createdAt);
@@ -98,7 +93,6 @@ export default function Dashboard() {
     ],
   };
 
-  // Top Products
   const productSales = {};
   orders.forEach((order) => {
     order.order.forEach((item) => {
@@ -130,7 +124,6 @@ export default function Dashboard() {
     ],
   };
 
-  // Bill Status
   const billStatusCount = orders.reduce((acc, order) => {
     acc[order.Bill_Status] = (acc[order.Bill_Status] || 0) + 1;
     return acc;
@@ -172,24 +165,15 @@ export default function Dashboard() {
       <div className="chart-section">
         <div className="chart-card">
           <h2>Monthly Sales Analysis</h2>
-          <Bar
-            data={monthlySalesData}
-            options={{ responsive: true, maintainAspectRatio: false }}
-          />
+          <Bar data={monthlySalesData} options={{ responsive: true, maintainAspectRatio: false }} />
         </div>
         <div className="chart-card">
           <h2>Top Products</h2>
-          <Bar
-            data={topProductsData}
-            options={{ responsive: true, maintainAspectRatio: false }}
-          />
+          <Bar data={topProductsData} options={{ responsive: true, maintainAspectRatio: false }} />
         </div>
         <div className="chart-card">
           <h2>Bill Status Distribution</h2>
-          <Pie
-            data={billStatusDataChart}
-            options={{ responsive: true, maintainAspectRatio: false }}
-          />
+          <Pie data={billStatusDataChart} options={{ responsive: true, maintainAspectRatio: false }} />
         </div>
       </div>
 

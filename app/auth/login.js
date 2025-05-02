@@ -62,10 +62,10 @@ export default function Login() {
         localStorage.setItem("token", data.jwt);
         localStorage.setItem("loginuser", data.user.username);
         localStorage.setItem("restroname", data.user.restro_name);
-        localStorage.setItem("userrole", data.user.role);
+        // localStorage.setItem("userrole", data.user.role);
 
         
-        toast.success(`Welcome, ${data.user.userrole}!`);
+        toast.success(`Welcome to Restromate!`);
         
         setTimeout(() => {
           setLoading(false);
