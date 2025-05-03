@@ -154,17 +154,20 @@ function KitchenPage() {
     <div className="p-5 w-full h-screen flex flex-col items-center bg-gray-100 overflow-hidden relative">
 
       {/* Fullscreen Toggle Button */}
-      <div className="fixed top-4 right-4 z-50">
+      <div className="fixed top-4 right-4 z-50 sm:top-4 sm:right-4 top-2 right-2">
         <button
           onClick={toggleFullscreen}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl shadow-md transition-all text-sm font-medium"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl shadow-md transition-all text-xs sm:text-sm font-medium"
         >
-          {isFullscreen ? "Exit Full Screen" : "Enter Full Screen"}
+          {isFullscreen ? "Exit Full Screen" : "Full Screen"}
         </button>
       </div>
 
+
       {/* Heading */}
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">Kitchen Orders</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-800 text-center">
+        Kitchen Orders
+      </h1>
 
       {/* Timer UI */}
       <div className="w-full max-w-5xl mb-4">
